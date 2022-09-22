@@ -79,7 +79,7 @@ public class Position {
      */
     public void addToTeam(Position newMemb){
         if (newMemb == null) return;
-        /*# YOUR CODE HERE */
+        team.add(newMemb);
 
     }
 
@@ -88,7 +88,26 @@ public class Position {
      * ensure that the team member no longer has this position as their manager
      */
     public void removeFromTeam(Position teamMemb){
-        /*# YOUR CODE HERE */
+        if(teamMemb == null) return;
+        // Taken from stackoverflow.com/questions/223918
+        Iterator<Position> iterator = team.iterator();
+        while(iterator.hasNext()){
+            Position mem = iterator.next();
+            if(teamMemb.equals(mem)&& !mem.isManager()){
+                iterator.remove();
+                break;
+            }
+        }
+        /*
+        // this is old one
+        Set<Position> tmpSet = new HashSet<Position>();
+        team.forEach((Position mem) -> {
+            if(mem.equals(teamMemb) && !mem.isManager()) {
+                tmpSet.add(mem);
+            }
+        });
+        team.removeAll(tmpSet);
+        */
 
     }
 
