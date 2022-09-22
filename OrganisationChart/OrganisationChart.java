@@ -3,9 +3,9 @@
 // You may not distribute it in any other way without permission.
 
 /* Code for COMP103 - 2022T2, Assignment 5
- * Name:
- * Username:
- * ID:
+ * Name: Ryan Sturgess
+ * Username: sturgeryan
+ * ID: 300618020
  */
 
 import ecs100.*;
@@ -146,7 +146,11 @@ public class OrganisationChart {
             pos.draw();
         }
         //draw the nodes under pos
-        /*# YOUR CODE HERE */
+        if(pos.isManager()) {
+            for (Position teamMemb : pos.getTeam()) {
+                drawTree(teamMemb);
+            }
+        }
 
     }
 
@@ -159,10 +163,23 @@ public class OrganisationChart {
      * [Completion:] If (x,y) is under two Positions, it should return the top one.
      */
     private Position findPosition(double x, double y, Position pos){
-        Position ans = null;        
-        /*# YOUR CODE HERE */
-
-        return ans;
+        if(pos.on(x, y)) {
+            return pos;
+        }
+        Stack<Position> tmpStack = new Stack<Position>();     
+        if(pos.isManager()) {
+            for (Position teamMemb : pos.getTeam()) {
+                tmpStack.push(findPosition(x, y, teamMemb));
+            }
+        }
+        while (!tmpStack.isEmpty()) {
+            if(tmpStack.peek() != null){
+                return tmpStack.pop();
+            } else{
+                tmpStack.pop();
+            }   
+        }
+        return null;
     }
 
     /** [STEP 2:] 
