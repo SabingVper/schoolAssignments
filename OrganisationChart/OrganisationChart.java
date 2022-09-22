@@ -163,10 +163,21 @@ public class OrganisationChart {
      * [Completion:] If (x,y) is under two Positions, it should return the top one.
      */
     private Position findPosition(double x, double y, Position pos){
+        Position ans = null;
         if(pos.on(x, y)) {
             return pos;
         }
-        Stack<Position> tmpStack = new Stack<Position>();     
+           
+        /* if(pos.isManager()) {
+            for (Position position : pos.getTeam()) {
+                ans = findPosition(x, y, position);
+                if(ans != null) {
+                    return ans;
+                }
+            }
+        } */
+
+        Stack<Position> tmpStack = new Stack<Position>(); 
         if(pos.isManager()) {
             for (Position teamMemb : pos.getTeam()) {
                 tmpStack.push(findPosition(x, y, teamMemb));
@@ -179,7 +190,7 @@ public class OrganisationChart {
                 tmpStack.pop();
             }   
         }
-        return null;
+        return ans;
     }
 
     /** [STEP 2:] 
@@ -187,7 +198,9 @@ public class OrganisationChart {
      * Check the arguments are valid first.
      */
     public void addNewPosition(Position newPos, Position target){
-        /*# YOUR CODE HERE */
+        if((newPos == null) || (target == null)) return;
+        target.addToTeam(newPos);
+        this.redraw();
 
     }
 
@@ -204,7 +217,8 @@ public class OrganisationChart {
      */
     private void movePosition(Position pos, Position target) {
         if ((pos == null) || (target == null)){return;}   //invalid arguments.
-        /*# YOUR CODE HERE */
+        target.addToTeam(pos);
+        this.redraw();
 
     }
 
@@ -215,7 +229,14 @@ public class OrganisationChart {
      *  should now be no selected position
      */
     public void removePosition(Position pos){
-        /*# YOUR CODE HERE */
+        if(pos.isManager() || pos.equals(organisation)) return;
+        try{
+            if(selectedPosition.equals(pos)){
+                selectedPosition = null;
+            }
+        } catch (NullPointerException E) {}
+        pos.getManager().removeFromTeam(pos); 
+        this.redraw();
 
     }
 
