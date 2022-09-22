@@ -79,6 +79,7 @@ public class Position {
      */
     public void addToTeam(Position newMemb){
         if (newMemb == null) return;
+        newMemb.manager = this;
         team.add(newMemb);
 
     }
@@ -89,6 +90,10 @@ public class Position {
      */
     public void removeFromTeam(Position teamMemb){
         if(teamMemb == null) return;
+        teamMemb.manager = null;
+        team.remove(teamMemb);
+        
+        /*
         // Taken from stackoverflow.com/questions/223918
         Iterator<Position> iterator = team.iterator();
         while(iterator.hasNext()){
