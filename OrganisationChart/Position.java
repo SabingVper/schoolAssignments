@@ -119,7 +119,7 @@ public class Position {
     // Simple getters and setters  ==================================
 
     /** Returns the offset of this Position */
-    public double getOffset() {return offset;}
+    public Double getOffset() {return offset;}
 
     /** Returns the manager of this Position */
     public Position getManager()  {return manager;}
