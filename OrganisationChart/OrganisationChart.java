@@ -217,6 +217,9 @@ public class OrganisationChart {
      */
     private void movePosition(Position pos, Position target) {
         if ((pos == null) || (target == null)){return;}   //invalid arguments.
+        if(inSubtree(target, pos)) {
+            return;
+        }
         target.addToTeam(pos);
         this.redraw();
 
@@ -248,7 +251,13 @@ public class OrganisationChart {
      *  (recursive call, which must return true if it finds the position)
      */
     private boolean inSubtree(Position pos, Position subtree) {
-        /*# YOUR CODE HERE */
+        if((subtree == null) || (pos == null)) return false;
+        if(subtree.equals(pos)) return true;
+        if(subtree.isManager()) {
+            for (Position mem : subtree.getTeam()) {
+                if(inSubtree(pos, mem)) return true;
+            }
+        }
         return false;
 
     }
