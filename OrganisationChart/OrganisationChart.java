@@ -27,7 +27,7 @@ public class OrganisationChart {
     private boolean newPosition = false;       // adding a new Position to tree
                                                //  the user entered
 
-    private String newRole = null;
+    // private String newRole = null;
 
     // constants for the layout
     public static final double NEW_LEFT = 10;  // left of the new position Icon
@@ -45,6 +45,8 @@ public class OrganisationChart {
         UI.setMouseListener( this::doMouse );
         UI.addTextField("Change Role", this::setRole);
         UI.addButton("Load test tree",  this::makeTestTree); 
+        UI.addButton("Load test tree from File", ()->{loadTree("test-tree.txt");});
+        UI.addButton("Save Tree", this::saveTree);
         UI.addButton("Quit", UI::quit);
         UI.setWindowSize(1100,500);
         UI.setDivider(0);
@@ -95,6 +97,10 @@ public class OrganisationChart {
                     pressedPosition.draw(false, true);
                 }
             }
+        } else if (action.equals("dragged")){
+            if(pressedPosition != null){
+                pressedPosition.moveOffset(x);
+            }
         }
         else if (action.equals("released")){
             Position targetPosition = findPosition(x, y, organisation);
@@ -126,7 +132,7 @@ public class OrganisationChart {
                 }
             }
             this.redraw();
-        }
+        } 
     }
 
 
@@ -260,6 +266,95 @@ public class OrganisationChart {
         }
         return false;
 
+    }
+
+    /* 
+     * Loads tree into memory from file
+     * calls a recurvse function
+     */
+
+    public void loadTree(String fileName) {
+        if(!Files.exists(Path.of(fileName))) {
+            UI.println("No such file exists " + fileName);
+            return;
+        }
+        try {
+            organisation = loadSubTree(new ArrayDeque<String>(Files.readAllLines(Path.of(fileName))));
+        } catch (IOException e) {
+            UI.println("File failed to read lines " + e);
+        }
+    }
+    
+    /* 
+     * Load tree or subtree
+     * Called Recurvisly 
+     */
+
+    public Position loadSubTree(Queue<String> lines) {
+        Scanner line = new Scanner(lines.poll());
+        int teamNum = line.nextInt();
+        double offset = line.nextDouble();
+        // String origin = line.next();
+        String name = line.nextLine();
+        Position node = new Position(name, offset);
+        for (int i = 0; i < teamNum; i++) {
+            Position leaf = loadSubTree(lines);
+            node.addToTeam(leaf);
+        }
+        return node;
+    }
+
+    /** 
+     * Saves tree to file
+     */
+    public void saveTree() {
+        Queue<String> lines = treeToStrings(organisation);
+        try {
+            String pathName = UI.askString("Output File Name: ");
+            while(pathName.contains(" ")){
+                UI.println("Invaild File Name (should not cotain whitespace)");
+                pathName = UI.askString("Output File Name: ");
+            }
+            File newFile = new File(pathName = ".txt");
+            while(newFile.exists()) {
+                UI.println("Can't write to files that exists");
+                pathName = UI.askString("Output File Name: ");
+                while(pathName.contains(" ")){
+                    UI.println("Invaild File Name (should not cotain whitespace)");
+                    pathName = UI.askString("Output File Name: ");
+                }
+            }
+            // From stackoverflow.com/questions/50257374
+            FileWriter fWriter = new FileWriter(newFile);
+            BufferedWriter bWriter = new BufferedWriter(fWriter);
+            while(!lines.isEmpty()) {
+                bWriter.write(lines.poll());
+            }
+            bWriter.close();
+        } catch (IOException e) {
+            UI.println("File Error " + e);
+            return;
+        }
+        
+    }
+
+
+    /**
+     * Runs through tree and return 
+     */
+    public Queue<String> treeToStrings(Position pos) {
+        Queue<String> lines = new ArrayDeque<String>();
+        String line = "";
+        line += pos.getTeam().size() + " ";
+        line += pos.getOffset() + " ";
+        line += pos.getRole() + "%n";
+        lines.add(line);
+        if(pos.isManager()) {
+            for (Position mem : pos.getTeam()) {
+                lines.addAll(treeToStrings(mem)); 
+            }
+        }
+        return lines;
     }
 
     /**
