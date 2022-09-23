@@ -3,9 +3,9 @@
 // You may not distribute it in any other way without permission.
 
 /* Code for COMP103 - 2022T2, Assignment 5
- * Name:
- * Username:
- * ID:
+ * Name: Ryan Sturgess
+ * Username: sturgeryan
+ * ID: 300618020
  */
 
 import ecs100.*;
@@ -118,6 +118,9 @@ public class Position {
 
     // Simple getters and setters  ==================================
 
+    /** Returns the offset of this Position */
+    public double getOffset() {return offset;}
+
     /** Returns the manager of this Position */
     public Position getManager()  {return manager;}
 
@@ -126,6 +129,9 @@ public class Position {
 
     /** Sets the role of this Position */
     public void setRole(String r)  {role = r;}
+
+    /** Sets the Manager of this position */
+    public void setManager(Position newManager) {this.manager = newManager;}
 
     /* Clear the role of the position */
     public void clearRole(){
