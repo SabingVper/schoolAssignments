@@ -46,6 +46,7 @@ public class OrganisationChart {
         UI.addTextField("Change Role", this::setRole);
         UI.addButton("Load test tree",  this::makeTestTree); 
         UI.addButton("Load test tree from File", ()->{loadTree("test-tree.txt");});
+        UI.addButton("Load Tree", ()->loadTree(UIFileChooser.open("Open File")));
         UI.addButton("Save Tree", this::saveTree);
         UI.addButton("Quit", UI::quit);
         UI.setWindowSize(1100,500);
@@ -280,6 +281,7 @@ public class OrganisationChart {
         }
         try {
             organisation = loadSubTree(new ArrayDeque<String>(Files.readAllLines(Path.of(fileName))));
+            this.redraw();
         } catch (IOException e) {
             UI.println("File failed to read lines " + e);
         }
@@ -295,7 +297,7 @@ public class OrganisationChart {
         int teamNum = line.nextInt();
         double offset = line.nextDouble();
         // String origin = line.next();
-        String name = line.nextLine();
+        String name = line.nextLine().trim();
         Position node = new Position(name, offset);
         for (int i = 0; i < teamNum; i++) {
             Position leaf = loadSubTree(lines);
@@ -315,7 +317,7 @@ public class OrganisationChart {
                 UI.println("Invaild File Name (should not cotain whitespace)");
                 pathName = UI.askString("Output File Name: ");
             }
-            File newFile = new File(pathName = ".txt");
+            File newFile = new File(pathName + ".txt");
             while(newFile.exists()) {
                 UI.println("Can't write to files that exists");
                 pathName = UI.askString("Output File Name: ");
@@ -328,9 +330,14 @@ public class OrganisationChart {
             FileWriter fWriter = new FileWriter(newFile);
             BufferedWriter bWriter = new BufferedWriter(fWriter);
             while(!lines.isEmpty()) {
-                bWriter.write(lines.poll());
+                if(lines.size() == 1){
+                    bWriter.write(String.format(lines.poll()));
+                    break;
+                }
+                bWriter.write(String.format(lines.poll()+"%n"));
             }
             bWriter.close();
+            UI.println("File saved");
         } catch (IOException e) {
             UI.println("File Error " + e);
             return;
@@ -347,7 +354,7 @@ public class OrganisationChart {
         String line = "";
         line += pos.getTeam().size() + " ";
         line += pos.getOffset() + " ";
-        line += pos.getRole() + "%n";
+        line += pos.getRole();
         lines.add(line);
         if(pos.isManager()) {
             for (Position mem : pos.getTeam()) {
@@ -361,6 +368,7 @@ public class OrganisationChart {
      * Redraw the entire organisation chart.
      */
     private void redraw() {
+        UI.clearText();
         UI.clearGraphics();
         drawTree(organisation);
         drawNewIcon();
