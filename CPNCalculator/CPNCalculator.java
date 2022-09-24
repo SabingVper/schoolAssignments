@@ -3,9 +3,9 @@
 // You may not distribute it in any other way without permission.
 
 /* Code for COMP103 - 2022T2, Assignment 5
- * Name:
- * Username:
- * ID:
+ * Name: Ryan Sturgess
+ * Username: sturgeryan
+ * ID: 300618020
  */
 
 import ecs100.*;
