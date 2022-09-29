@@ -11,6 +11,7 @@
 import ecs100.UI;
 import java.awt.*;
 import java.util.*;
+import java.util.Queue;
 
 /**
  * Search for a path to the goal in a maze.
@@ -104,8 +105,25 @@ public class MazeSearch {
      * Use Breadth first search.
      */
     public void exploreFromCellShortest(MazeCell start) {
-        /*# YOUR CODE HERE */
+        Map<MazeCell, Integer> weights = new HashMap<MazeCell,Integer>();
+        Queue<MazeCell> queue = new ArrayDeque<MazeCell>();
+        exploreFromCellShortest(start, queue, weights);
+        while(!queue.isEmpty()) {
+            exploreFromCellShortest(queue.poll(), queue, weights);
+        }
+        for (MazeCell mazeCell : queue) {
+            
+        }
+    }
 
+    public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue, Map<MazeCell, Integer> weights) {
+        if(weights.isEmpty()){weights.put(cell, 0);}
+        if(cell.isVisited()) return;
+        cell.visit();
+        for (MazeCell mazeCell : cell) {
+            queue.add(mazeCell);
+            weights.put(mazeCell, weights.get(cell)+1);
+        }
     }
 
     //=================================================
