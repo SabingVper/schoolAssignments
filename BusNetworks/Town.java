@@ -3,15 +3,15 @@
 // You may not distribute it in any other way without permission.
 
 /* Code for COMP103 - 2022T2, Assignment 6
- * Name:
- * Username:
- * ID:
+ * Name: Ryan Sturgess
+ * Username: sturgeryan
+ * ID: 300618020
  */
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import ecs100.*;
+// import ecs100.*;
 
 public class Town {
 
