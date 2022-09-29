@@ -13,6 +13,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.Queue;
 
+import javax.swing.CellEditor;
+
 /**
  * Search for a path to the goal in a maze.
  * The maze consists of a graph of MazeCells:
@@ -36,6 +38,8 @@ public class MazeSearch {
     private String search = "first";   // "first", "all", or "shortest"
     private int pathCount = 0;
     private boolean stopNow = false;
+    private Map<MazeCell, Integer> weights; // assigns weights to nodes
+    private Map<Queue<MazeCell>, Integer> pathWeights; // finds shortest path by weights
 
 
     /** CORE
@@ -105,25 +109,65 @@ public class MazeSearch {
      * Use Breadth first search.
      */
     public void exploreFromCellShortest(MazeCell start) {
-        Map<MazeCell, Integer> weights = new HashMap<MazeCell,Integer>();
+        weights = new HashMap<MazeCell,Integer>();
         Queue<MazeCell> queue = new ArrayDeque<MazeCell>();
-        exploreFromCellShortest(start, queue, weights);
+        exploreFromCellShortest(start, queue);
         while(!queue.isEmpty()) {
-            exploreFromCellShortest(queue.poll(), queue, weights);
+            exploreFromCellShortest(queue.poll(), queue);
         }
-        for (MazeCell mazeCell : queue) {
-            
+        weights.replace(maze.getGoal(), 0);
+        maze.reset();
+        
+
+        pathWeights = new HashMap<Queue<MazeCell>, Integer>();
+        int value = 0;
+        exploreFromCellShortest(start, value, new ArrayDeque<MazeCell>());
+        Queue<MazeCell> hold = null;
+        int min = Integer.MAX_VALUE;
+        for (Map.Entry<Queue<MazeCell>,Integer> values : pathWeights.entrySet()) {
+            if(values.getValue() < min) {
+                hold = values.getKey();
+                min = values.getValue();
+            }
         }
+        for (MazeCell mazeCell : hold) {
+            mazeCell.draw(Color.yellow);
+        }
+        maze.getGoal().draw(Color.BLUE);
     }
 
-    public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue, Map<MazeCell, Integer> weights) {
+    public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue) {
         if(weights.isEmpty()){weights.put(cell, 0);}
-        if(cell.isVisited()) return;
         cell.visit();
         for (MazeCell mazeCell : cell) {
-            queue.add(mazeCell);
-            weights.put(mazeCell, weights.get(cell)+1);
+            if(!mazeCell.isVisited()) {
+                queue.add(mazeCell);
+                weights.put(mazeCell, weights.get(cell)+1);
+            }
         }
+    }
+    
+    public void exploreFromCellShortest(MazeCell cell, int value, Queue<MazeCell> order){
+        if(cell == maze.getGoal()) {
+            order.add(cell);
+            Queue<MazeCell> test = new ArrayDeque<MazeCell>();
+            for (MazeCell mazeCell : order) {
+                test.add(mazeCell);
+            }
+            pathWeights.put(test, value);
+            return;
+        }
+        if(cell.isVisited()) {
+            value += 100;
+            return;
+        }
+        cell.visit();
+        order.add(cell);
+        value += weights.get(cell);
+        for (MazeCell mazeCell : cell) {
+            exploreFromCellShortest(mazeCell, value, order);
+        }
+        cell.unvisit();
     }
 
     //=================================================
