@@ -58,8 +58,17 @@ public class MazeSearch {
             cell.draw(Color.blue);   // to indicate finding the goal
             return true;
         }
-        /*# YOUR CODE HERE */
-
+        if(cell.isVisited()) return false;
+        cell.visit();
+        cell.draw(Color.yellow);
+        UI.sleep(delay);
+        for (MazeCell neighbour : cell) {
+            if(exploreFromCell(neighbour)) {
+                return true;
+            }
+        }
+        cell.draw(Color.red);
+        return false;
     }
 
     /** COMPLETION
@@ -74,8 +83,20 @@ public class MazeSearch {
      */
     public void exploreFromCellAll(MazeCell cell) {
         if (stopNow) { return; }    // exit if user clicked the stop now button
-        /*# YOUR CODE HERE */
-
+        if(cell == maze.getGoal()) {
+            cell.draw(Color.blue);
+            UI.sleep(1000);
+            return;
+        }
+        if(cell.isVisited()) return;
+        cell.visit();
+        cell.draw(Color.yellow);
+        for (MazeCell mazeCell : cell) {
+            exploreFromCellAll(mazeCell);
+        }
+        pathCount++;
+        cell.unvisit();
+        cell.draw(Color.white);
     }
 
     /** CHALLENGE
