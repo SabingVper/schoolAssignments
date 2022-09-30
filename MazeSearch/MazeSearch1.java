@@ -32,14 +32,14 @@ import javax.swing.CellEditor;
  * if the cell turns out to be on a dead end, it is coloured red.
  */
 
-public class MazeSearch {
+public class MazeSearch1 {
 
     private Maze maze;
     private String search = "first";   // "first", "all", or "shortest"
     private int pathCount = 0;
     private boolean stopNow = false;
     private Set<Queue<MazeCell>> paths;
-
+    private boolean goalFound;
 
     /** CORE
      * Search for a path from a cell to the goal.
@@ -109,6 +109,7 @@ public class MazeSearch {
      */
     public void exploreFromCellShortest(MazeCell start) {
         paths = new HashSet<>();
+        goalFound = false;
         Queue<MazeCell> queue = new ArrayDeque<MazeCell>();
         Queue<MazeCell> currPath = new ArrayDeque<MazeCell>();
         exploreFromCellShortest(start, queue, currPath);
@@ -137,16 +138,25 @@ public class MazeSearch {
         maze.getGoal().draw(Color.BLUE);
     }
 
+    /**
+     * This is an annoying method... it can call a StackOverflowError
+     * due to the BFS style of searching.
+     * The Path Queue calls it as it gets up to 9540 elements
+     * I have made mutliple different verisons of this code.
+     * This one right now can cancels search once goal is found 
+      */
     public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue, Queue<MazeCell> path) {
         cell.visit();
         path.add(cell);
         if(cell == maze.getGoal()) {
+            goalFound = true;
             Queue<MazeCell> temp = new ArrayDeque<MazeCell>();
             for (MazeCell mazeCell : path) {                
                 temp.add(mazeCell);
             }
             paths.add(temp);
         }
+        if(goalFound) return;
         for (MazeCell mazeCell : cell) {
             if(!mazeCell.isVisited()) {
                 queue.add(mazeCell);
@@ -155,6 +165,7 @@ public class MazeSearch {
         if(!queue.isEmpty()) {
             exploreFromCellShortest(queue.poll(), queue, path);
         }
+        if(goalFound) return;
         cell.unvisit();
         path.remove(cell);
     }
@@ -214,7 +225,7 @@ public class MazeSearch {
     }
 
     public static void main(String[] args) {
-        MazeSearch ms = new MazeSearch();
+        MazeSearch1 ms = new MazeSearch1();
         ms.setupGui();
         ms.makeMaze();
     }
