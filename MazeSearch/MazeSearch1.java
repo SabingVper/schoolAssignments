@@ -131,11 +131,11 @@ public class MazeSearch1 {
                 }
             }
             if(check0 || check1) {
-                mazeCell.draw(Color.yellow);
+                mazeCell.draw(Color.blue);
                 old = mazeCell;
             }
         }
-        maze.getGoal().draw(Color.BLUE);
+        maze.getGoal().draw(Color.green);
     }
 
     /**
@@ -148,6 +148,7 @@ public class MazeSearch1 {
     public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue, Queue<MazeCell> path) {
         cell.visit();
         path.add(cell);
+        cell.draw(Color.yellow);
         if(cell == maze.getGoal()) {
             goalFound = true;
             Queue<MazeCell> temp = new ArrayDeque<MazeCell>();
@@ -155,6 +156,7 @@ public class MazeSearch1 {
                 temp.add(mazeCell);
             }
             paths.add(temp);
+            cell.draw(Color.green);
         }
         if(goalFound) return;
         for (MazeCell mazeCell : cell) {

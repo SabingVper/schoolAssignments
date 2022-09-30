@@ -130,22 +130,31 @@ public class MazeSearch {
                 }
             }
             if(check0 || check1) {
-                mazeCell.draw(Color.yellow);
+                mazeCell.draw(Color.blue);
                 old = mazeCell;
             }
         }
         maze.getGoal().draw(Color.BLUE);
     }
 
+    /**
+     * This is an annoying method... it can call a StackOverflowError
+     * due to the BFS style of searching.
+     * The Path Queue calls it as it gets up to 9540 elements
+     * I have made mutliple different verisons of this code.
+     * This one right now can call a StackOverflowError
+      */
     public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue, Queue<MazeCell> path) {
         cell.visit();
         path.add(cell);
+        cell.draw(Color.yellow);
         if(cell == maze.getGoal()) {
             Queue<MazeCell> temp = new ArrayDeque<MazeCell>();
             for (MazeCell mazeCell : path) {                
                 temp.add(mazeCell);
             }
             paths.add(temp);
+            cell.draw(Color.green);
         }
         for (MazeCell mazeCell : cell) {
             if(!mazeCell.isVisited()) {
