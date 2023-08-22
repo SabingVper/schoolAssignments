@@ -122,7 +122,6 @@ public class MazeSearch1 {
         MazeCell old = maze.getGoal();
         while (!stackPath.isEmpty()) {
             MazeCell mazeCell = stackPath.pop();
-            boolean check0 = false;
             boolean check1 = (old == mazeCell) ? true : false;
             for (MazeCell cellCheck : old) {
                 if(cellCheck == mazeCell) {
@@ -130,8 +129,9 @@ public class MazeSearch1 {
                     break;
                 }
             }
-            if(check0 || check1) {
+            if(check1) {
                 mazeCell.draw(Color.blue);
+                UI.sleep(50);
                 old = mazeCell;
             }
         }
@@ -149,6 +149,7 @@ public class MazeSearch1 {
         cell.visit();
         path.add(cell);
         cell.draw(Color.yellow);
+        UI.sleep(50);
         if(cell == maze.getGoal()) {
             goalFound = true;
             Queue<MazeCell> temp = new ArrayDeque<MazeCell>();

@@ -121,7 +121,6 @@ public class MazeSearch {
         MazeCell old = maze.getGoal();
         while (!stackPath.isEmpty()) {
             MazeCell mazeCell = stackPath.pop();
-            boolean check0 = false;
             boolean check1 = (old == mazeCell) ? true : false;
             for (MazeCell cellCheck : old) {
                 if(cellCheck == mazeCell) {
@@ -129,7 +128,7 @@ public class MazeSearch {
                     break;
                 }
             }
-            if(check0 || check1) {
+            if(check1) {
                 mazeCell.draw(Color.blue);
                 old = mazeCell;
             }
