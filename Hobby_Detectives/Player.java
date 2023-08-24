@@ -1,7 +1,6 @@
 /*PLEASE DO NOT EDIT THIS CODE*/
 /*This code was generated using the UMPLE 1.32.1.6535.66c005ced modeling language!*/
 import java.io.BufferedReader;
-import java.io.IOError;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
@@ -22,21 +21,21 @@ public class Player
     private int x;
     private int y;
     private List<Hand> guessesMade;
-    private boolean solveAttempt;
-    private boolean activePlayer;
+    private boolean solveAttempt = false;
+    private boolean activePlayer = false;
+    public int moves = 0;
+    public int[][] movementLog;
+    private boolean inRoom;
 
     //------------------------
     // CONSTRUCTOR
     //------------------------
 
-    public Player(String aName, int aX, int aY)
-    {
-        name = aName;
-        x = aX;
-        y = aY;
+    public Player(String name, int x, int y) {
+        this.name = name;
+        this.x = x;
+        this.y = y;
         guessesMade = new ArrayList<>();
-        solveAttempt = false;
-        activePlayer = false;
     }
 
 
@@ -54,35 +53,134 @@ public class Player
      * Needs a check to skip player turn when trapped by its previous movements 
      *
      * @param b - Board Object
-     * @param numMoves - Number of spaces the player is allowed to move
      * @return False if move is invalid or if the player should not have
      * access to making a move, otherwise true
      */
     // line 30 "model.ump"
-    public boolean movement(Board b, int numMoves){
-        int totalMoves = numMoves;
-        String room = b.getRoom(name,x,y);
-        Room r;
-        String move = "";
-        if(!room.isEmpty()) {
-        	r = b.getRoom(room);
-        	String def = "";
-        	Map<String, Cell> exits = r.getExits();
-        	String res = "\nSelect a door to exit (";
-        	for(String s : exits.keySet()) {
-        		if(def.isEmpty()) {def = s;}
-        		res = res + s + "|";
-        	}
-        	res = res + "): ";
-        	System.out.print(res);
-        	move = "";
-            InputStreamReader isr = new InputStreamReader(System.in);  
-            BufferedReader br = new BufferedReader(isr);
-            try {
-                move = capitaliseFirstLetter(br.readLine().trim());
-            } catch (IOException e) {
-                move = "";
+    public boolean movement(Board b){
+        if(exitRoom(b)) {return true;}
+
+        //Check to ensure the player has a right to make moves
+        if(!activePlayer || solveAttempt || (!activePlayer && solveAttempt)){
+            System.out.println(name+" is not allowed to make moves.");
+            return false;
+        }
+
+        System.out.println(b);
+        while(true){
+            System.out.print("\nSelect a direction to move (up|down|left|right): ");
+
+            //Gets user input
+            String move = getCapitalisedUserInput();
+            if(moves<=0){return true;}
+
+            //Ensures input is a valid action
+            if(!(move.equals("Up")||move.equals("Left")||
+                    move.equals("Down")||move.equals("Right")) || move.isEmpty() || move == null){
+                System.out.println("\nInvalid input. Type \'Up\', \'Down\', \'Left\', or \'Right\' to make a move.");
+                continue;
             }
+
+            //Ensures that movement is possible and position being moved to is not occupied
+            boolean playerMoved = b.movePlayer(name, move, x, y, movementLog);
+            /* Checks player position for room entrance and adds player to the room whilst making
+            the player's guess ability available */
+            if(playerMoved){
+                String room = b.getRoom(name,x,y);
+                if(!room.isEmpty()) {
+                    moves = 1;
+                    Room r = b.getRoom(room);
+                    r.addPlayer(this, b);
+                    inRoom = true;
+                }
+                break;
+            }
+
+            System.out.println("\nCannot move in that direction. The \'"+move+"\' direction cannot be accessed.");
+        }
+
+        //Tracks of movements made
+        movementLog[movementLog.length - moves][0] = x;
+        movementLog[movementLog.length - moves][1] = y;
+        moves--;
+
+        //if(inRoomGuess) {guess(b);}//Begins the guess action
+        return true;
+    }
+
+    /**
+     * Performs the player's movements based on their mouse input's direction within the GUI.
+     * @param b         - Board object
+     * @param direction - direction for the player's movement
+     */
+    public void movement(Board b, String direction) {
+        //Check to ensure the player has a right to make moves
+        if(moves<=0 || !activePlayer || solveAttempt || (!activePlayer && solveAttempt)){
+            movementLog = null;
+            return;
+        }
+
+        System.out.println("Player has "+moves+" moves.");
+        if(exitRoom(b)) {return;} //Allows the user/player their exit options for the room they are in, if any
+
+        while(true){
+            //System.out.println(direction);
+
+            //Ensures input is a valid action
+            if(!(direction.equals("Up")||direction.equals("Left")||
+                    direction.equals("Down")||direction.equals("Right")) || direction.isEmpty() || direction == null){
+                System.out.println("\nInvalid input. Type \'Up\', \'Down\', \'Left\', or \'Right\' to make a move.");
+                continue;
+            }
+
+            //Ensures that movement is possible and position being moved to is not occupied
+            boolean playerMoved = b.movePlayer(name, direction, x, y, movementLog);
+            /* Checks player position for room entrance and adds player to the room whilst making
+            the player's guess ability available */
+            if(playerMoved){
+                String room = b.getRoom(name,x,y);
+                if(!room.isEmpty()) {
+                    moves = 1;
+                    Room r = b.getRoom(room);
+                    r.addPlayer(this, b);
+                    inRoom = true;
+                }
+                break;
+            }
+
+            System.out.println("\nCannot move in that direction. The \'"+direction+"\' direction cannot be accessed.");
+        }
+
+        //Tracks of movements made
+        movementLog[movementLog.length - moves][0] = x;
+        movementLog[movementLog.length - moves][1] = y;
+        moves--;
+
+        //if(inRoomGuess) {guess(b);}//Begins the guess action
+    }
+
+    /**
+     * Performs the action of letting the player exit the room
+     * @param b - Board class
+     * @return True if player is in a room and exits, False otherwise
+     */
+    public boolean exitRoom(Board b) {
+        String room = b.getRoom(name, x, y);
+        Room r;
+        String move;
+        if(!room.isEmpty()) {
+            r = b.getRoom(room);
+            String def = "";
+            Map<String, Cell> exits = r.getExits();
+            String res = "\nSelect a door to exit (";
+            for(String s : exits.keySet()) {
+                if(def.isEmpty()) {def = s;}
+                res = res + s + "|";
+            }
+            res = res + "): ";
+            System.out.print(res);
+
+            move = getCapitalisedUserInput();
             //Ensures input is a valid action
             if(!(exits.containsKey(move)) || move.isEmpty() || move == null){
                 move = def;
@@ -92,81 +190,14 @@ public class Player
             des.addOccupant(this);
             this.setX(des.getX());
             this.setY(des.getY());
-            numMoves--;
+            moves--;
+            inRoom = false;
+            return true;
         }
-        //Tracks of movements made
-        int[][] movementLog = new int[numMoves+1][2];
-        movementLog[0][0] = x;
-        movementLog[0][1] = y;
-
-        //Check to ensure the player has a right to make moves
-        if(!activePlayer || solveAttempt || (!activePlayer && solveAttempt)){
-            System.out.println(name+" is not allowed to make moves.");
-            return false;
-        }
-
-        boolean inRoomGuess = false;
-
-        while(numMoves > 0){
-            System.out.println(b.toString());
-            while(true){
-                System.out.print("\nSelect a direction to move (up|down|left|right): ");
-
-                //Gets user input
-                move = "";
-                InputStreamReader isr = new InputStreamReader(System.in);  
-                BufferedReader br = new BufferedReader(isr);
-                try {
-                    move = capitaliseFirstLetter(br.readLine().trim());
-                } catch (IOException e) {
-                    move = "";
-                }
-                //Ensures input is a valid action
-                if(!(move.equals("Up")||move.equals("Left")||
-                        move.equals("Down")||move.equals("Right")) || move.isEmpty() || move == null){
-                    System.out.println("\nInvalid input. Type \'Up\', \'Down\', \'Left\', or \'Right\' to make a move.");
-                    continue;
-                }
-
-                //Ensures that movement is possible and position being moved to is not occupied
-                boolean playerMoved = b.movePlayer(name, move, x, y, movementLog);
-                if(playerMoved){
-                	room = b.getRoom(name,x,y);
-                	if(!room.isEmpty()) {
-                		numMoves= 1;
-                		r = b.getRoom(room);
-                		r.addPlayer(this, b);
-                        inRoomGuess = true;
-                	}
-                	break;
-                }
-
-                System.out.println("\nCannot move in that direction. The \'"+move+"\' direction cannot be accessed.");
-            }
-
-            //Adds new position to the movement log
-            movementLog[totalMoves+1 - numMoves][0] = x;
-            movementLog[totalMoves+1 - numMoves][1] = y;
-            numMoves--;
-        }
-        if(inRoomGuess) {
-            guess(b);
-        }
-        return true;
+        return false;
     }
 
     /**
-     * TODO - Create a new movement method to work together with the GUI
-     * move is > than 0
-     * moves stored in the private fields
-     * Check player is in a room
-     * if move is allowed then decrement the movement
-     * board and direction as params
-     * direction used for the door
-     */
-
-    /**
-     *
      * Performs the GUESS action:
      * Player guesses a murder Weapon and Character for the current
      * Room they are in that they suspect is the crime scene
@@ -177,16 +208,15 @@ public class Player
      * a Hand containing the corresponding items the player has made an solve attempt on.
      */
     // line 84 "model.ump"
-    public Hand guess(Board b){
+    public Hand guess(Board b, GameGUI gui) {
         if(solveAttempt){throw new Error("Player has already made solve attempt");}
-        Hand guess = performGuessAndSolve(b, "Guess");
+        Hand guess = performGuessAndSolve(b, gui, "Guess");
         guessesMade.add(guess);
         return guess;
     }
 
 
     /**
-     *
      * Performs the SOLVE ATTEMPT action:
      * Player makes an accusation on a murder weapon, character and room. The
      * corresponding hand containing these items is created and the player is marked as no
@@ -198,9 +228,9 @@ public class Player
      * a Hand containing the corresponding items the player has made an solve attempt on.
      */
     // line 100 "model.ump"
-    public Hand solveAttempt(Board b){
+    public Hand solveAttempt(Board b, GameGUI gui) {
         if(solveAttempt){throw new Error("Player has already made solve attempt");}
-        Hand solveAttemptHand = performGuessAndSolve(b, "Solve Attempt");
+        Hand solveAttemptHand = performGuessAndSolve(b, gui, "Solve Attempt");
         if(solveAttemptHand==null){ return null; }
 
         setSolveAttempt(true);
@@ -209,7 +239,6 @@ public class Player
 
 
     /**
-     *
      * ---------------------------------------------------------------------------------
      * HELPER METHOD: guess() and solveAttempt()
      * ---------------------------------------------------------------------------------
@@ -226,7 +255,7 @@ public class Player
      * attempt/guess input. Throws an Error if player is not currently within a room.
      */
     // line 125 "model.ump"
-    private Hand performGuessAndSolve(Board b, String guessOrSolve){
+    private Hand performGuessAndSolve(Board b, GameGUI gui, String guessOrSolve) {
         String roomName = b.getRoom(name, x, y);
         if(roomName.isEmpty()){
             throw new Error("You are not in a room, no "+guessOrSolve+"(es/s) can be made.");
@@ -237,16 +266,18 @@ public class Player
         //Guess/Accusation Room - Defaulted to player's current room
         Card roomCard = getRoomCard(roomName);
         if(hand.contains(roomCard)){
-            System.out.println("Your hand contains "+ roomName + "card. Cannot make a guess.");
+            //System.out.println("Your hand contains "+ roomName + " card. Cannot make a guess.");
+            gui.showInformation("Your hand contains "+ roomName + " card. Cannot make a guess.");
             return null;
         }
-        System.out.println("\n\nYour "+guessOrSolve+" has been defaulted to, "+ roomName +", the current room that you are in.");
+        //System.out.println("\n\nYour "+guessOrSolve+" has been defaulted to, "+ roomName +", the current room that you are in.");
+        gui.showInformation("Your "+guessOrSolve+" has been defaulted to, "+ roomName +", the current room that you are in.");
 
         //Guess/Accusation Character
-        Card characCard = playerGuessOrAccuseCharacter(guessOrSolve);
+        Card characCard = playerGuessOrAccuseCharacter(gui, guessOrSolve);
 
         //Guess/Accusation Weapon
-        Card weaponCard = playerGuessOrAccuseWeapon(guessOrSolve);
+        Card weaponCard = playerGuessOrAccuseWeapon(gui, guessOrSolve);
 
         return createAndSetHand(List.of(roomCard, characCard, weaponCard));
     }
@@ -266,35 +297,34 @@ public class Player
      * @return a Card object of a Character type
      */
     // line 162 "model.ump"
-    private Card playerGuessOrAccuseCharacter(String guessOrSolve){
-        Card characCard = null;
+    private Card playerGuessOrAccuseCharacter(GameGUI gui, String guessOrSolve) {
+        Card characCard;
         while(true){
+            /*
             System.out.println("\n\nCharacter names: Lucilla, Bert, Malina, and Percy");
             System.out.print("Guess a character from the list above: ");
 
-            //Gets user input
-            String character = "";
-            InputStreamReader isr = new InputStreamReader(System.in);  
-            BufferedReader br = new BufferedReader(isr);
-            try {
-                character = capitaliseFirstLetter(br.readLine().trim());
-            } catch (IOException e) {
-                character = "";
-            }
+            //Gets User Input
+            String character = getCapitalisedUserInput();
+            */
 
+            String character = gui.showComboOptions("character: ", new String[]{"Lucilla", "Bert", "Malina", "Percy"});
+
+            if(character == null){continue;}
             //Ensures the input is a valid character name
-            if(character.equals("Lucilla")||character.equals("Bert")||
-                    character.equals("Malina")||character.equals("Percy") ||
-                    (character != null && !character.isEmpty())){
+            if((character.equals("Lucilla")||character.equals("Bert")||
+                    character.equals("Malina")||character.equals("Percy"))){
 
                 characCard = getCharacterCard(character);
                 //Ensures the character is not within the player's own hand
                 if(!hand.contains(characCard)){break;}
 
-                System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
+                //System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
+                gui.showInformation("Invalid "+guessOrSolve+": Card is in your hand. Try again.");
                 continue;
             }
-            System.out.println("\nInvalid "+guessOrSolve+": Not a valid character name. Try again.");
+            //System.out.println("\nInvalid "+guessOrSolve+": Not a valid character name. Try again.");
+            gui.showInformation("Invalid "+guessOrSolve+": Not a valid character name. Try again.");
         }
         return characCard;
     }
@@ -314,35 +344,35 @@ public class Player
      * @return a Card object of a Weapon type
      */
     // line 200 "model.ump"
-    private Card playerGuessOrAccuseWeapon(String guessOrSolve){
+    private Card playerGuessOrAccuseWeapon(GameGUI gui, String guessOrSolve) {
         Card weaponCard = null;
         while(true){
+            /*
             System.out.println("\n\nWeapon names: Broom, Scissors, Knife, Shovel, and iPad");
             System.out.print("Guess a weapon from the list above: ");
 
             //Gets user input
-            String weapon = "";
-            InputStreamReader isr = new InputStreamReader(System.in);  
-            BufferedReader br = new BufferedReader(isr);
-            try {
-                weapon = capitaliseFirstLetter(br.readLine().trim());
-            } catch (IOException e) {
-                weapon = "";
-            }
+            String weapon = getCapitalisedUserInput();
+            */
 
+            String weapon = gui.showComboOptions("weapon: ", new String[]{"Broom", "Scissors", "Knife",
+                    "Shovel", "iPad"});
+
+            if(weapon == null){continue;}
             //Ensures the input is a valid weapon name
             if(weapon.equals("Broom")||weapon.equals("Scissors")|| weapon.equals("Knife")||
-                    weapon.equals("Shovel")||weapon.equals("iPad") ||
-                    (!weapon.isEmpty() && weapon != null)){
+                    weapon.equals("Shovel")||weapon.equals("iPad")){
 
                 weaponCard = getWeaponCard(weapon);
                 //Ensures the weapon is not within the player's own hand
                 if(!hand.contains(weaponCard)){break;}
 
-                System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
+                //System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
+                gui.showInformation("Invalid "+guessOrSolve+": Card is in your hand. Try again.");
                 continue;
             }
-            System.out.println("\nInvalid "+guessOrSolve+": Not a valid weapon name. Try again.");
+            //System.out.println("\nInvalid "+guessOrSolve+": Not a valid weapon name. Try again.");
+            gui.showInformation("Invalid "+guessOrSolve+": Not a valid weapon name. Try again.");
         }
         return weaponCard;
     }
@@ -359,7 +389,7 @@ public class Player
      * @return a Hand Object containing the cards from the guess or solve actions
      */
     // line 235 "model.ump"
-    private Hand createAndSetHand(List<Card> guessOrSolveCards){
+    private Hand createAndSetHand(List<Card> guessOrSolveCards) {
         Hand guessOrSolveHand = new Hand();
         guessOrSolveHand.setCards(guessOrSolveCards);
         return guessOrSolveHand;
@@ -377,7 +407,7 @@ public class Player
      * @return Card object of the weapon
      */
     // line 248 "model.ump"
-    private Card getWeaponCard(String weapon){
+    private Card getWeaponCard(String weapon) {
         return new Card(Card.Category.WEAPON, Card.Type.values()[Card.indexOfTyp(weapon)]);
     }
 
@@ -393,7 +423,7 @@ public class Player
      * @return Card object of the character
      */
     // line 259 "model.ump"
-    private Card getCharacterCard(String character){
+    private Card getCharacterCard(String character) {
         return new Card(Card.Category.CHARACTER, Card.Type.values()[Card.indexOfTyp(character)]);
     }
 
@@ -409,7 +439,7 @@ public class Player
      * @return Card object of the room
      */
     // line 270 "model.ump"
-    private Card getRoomCard(String room){
+    private Card getRoomCard(String room) {
         return new Card(Card.Category.ROOM, Card.Type.values()[Card.indexOfTyp(room)]);
     }
 
@@ -424,7 +454,7 @@ public class Player
     // line 279 "model.ump"
     private void printPrevGuesses(){
         System.out.println("These are the previous guesses you have made: ");
-        for(int i=0; i<guessesMade.size(); i++){
+        for(int i=0; i<guessesMade.size(); i++) {
             System.out.println("\t" + i + ". " + guessesMade.get(i).getCards());
         }
     }
@@ -441,8 +471,8 @@ public class Player
      * @return String with first letter capitalised, or returns an empty string
      */
     // line 295 "model.ump"
-    private String capitaliseFirstLetter(String cardName){
-        if(cardName.isEmpty() || cardName == null){return null;}
+    private String capitaliseFirstLetter(String cardName) {
+        if(cardName.isEmpty()||cardName==null){return null;}
         return cardName.substring(0,1).toUpperCase()+cardName.substring(1).toLowerCase();
     }
 
@@ -453,9 +483,50 @@ public class Player
     //                          GETTERS  AND  SETTERS
     //-------------------------------------------------------------------------
 
-    public String getName()
-    {
-        return name;
+    /**
+     * @return String of the player's name
+     */
+    public String getName() {return name;}
+
+    /**
+     * Gets and returns the user's input, whilst ensuring the first letter of the
+     * card being referenced is capitalised
+     * @return String of user input with the first letter capitalised
+     */
+    public String getCapitalisedUserInput() {
+        String input;
+        InputStreamReader isr = new InputStreamReader(System.in);
+        BufferedReader br = new BufferedReader(isr);
+        try {
+            input = capitaliseFirstLetter(br.readLine().trim());
+        } catch (IOException e) {
+            input = "";
+        }
+        return input;
+    }
+
+    /**
+     * @return a boolean indicating whether the player is in a room or not
+     */
+    public boolean isInRoom(){return inRoom;}
+
+        //-----------------------------------------------
+        //           moves GETTERS AND SETTERS
+        //-----------------------------------------------
+
+    /**
+     * @return an integer indicating the number of moves the player has
+     */
+    public int getMoves() {return moves;}
+
+    /**
+     * Sets the number of moves a player is allowed, so long as the current moves equal to 0
+     * and reinitialized the movementLog
+     * @param moves - number of spaces a player is allowed to move
+     */
+    public void setMoves(int moves) {
+        this.moves = moves;
+        movementLog = new int[moves+1][2];
     }
 
         //-----------------------------------------------
@@ -465,40 +536,30 @@ public class Player
     /**
      * @return Player's hand as a Hand object
      */
-    public Hand getHand()
-    {
-        return hand;
-    }
+    public Hand getHand() {return hand;}
     /**
      * Sets the player's hand
      * @param aHand - player's allocated hand
      * @return true if successful
      */
-    public boolean setHand(Hand aHand)
-    {
-        hand = aHand;
+    public boolean setHand(Hand aHand) {
+        this.hand = aHand;
         return true;
     }
 
         //-----------------------------------------------
-        //      solveAttempt GETTERS AND SETTERS
+        //      guessesMade GETTERS AND SETTERS
         //-----------------------------------------------
     /**
      * @return list of all guesses made by the player as a String
      */
-    public List getGuessesMade()
-    {
-        return guessesMade;
-    }
+    public List<Hand> getGuessesMade() { return guessesMade; }
 
     /**
      * Sets the list for guesses the user has already attempted to make
      * @param aGuessesMade - list of hands containing the player's guessed
      */
-    public void setGuessesMade(List aGuessesMade)
-    {
-        guessesMade = aGuessesMade;
-    }
+    public void setGuessesMade(List<Hand> aGuessesMade) { this.guessesMade = aGuessesMade;}
 
 
         //-----------------------------------------------
@@ -507,17 +568,13 @@ public class Player
     /**
      * @return boolean of whether the player has made a solve attempt
      */
-    public boolean getSolveAttempt()
-    {
-        return solveAttempt;
-    }
+    public boolean getSolveAttempt(){ return solveAttempt; }
     /**
      * Sets whether the solve attempt has or has not been made
      * @param aSolveAttempt - boolean to set the solve attempt to
      * @return True if successful
      */
-    public boolean setSolveAttempt(boolean aSolveAttempt)
-    {
+    public boolean setSolveAttempt(boolean aSolveAttempt) {
         solveAttempt = aSolveAttempt;
         return true;
     }
@@ -529,17 +586,13 @@ public class Player
     /**
      * @return boolean indicating current player's turn
      */
-    public boolean getActivePlayer()
-    {
-        return activePlayer;
-    }
+    public boolean getActivePlayer() {return activePlayer;}
     /**
      * Sets whether it is the current player's turn
      * @param aActivePlayer - boolean to set the activePlayer field to
      * @return True if successful
      */
-    public boolean setActivePlayer(boolean aActivePlayer)
-    {
+    public boolean setActivePlayer(boolean aActivePlayer) {
         activePlayer = aActivePlayer;
         return true;
     }
@@ -556,7 +609,7 @@ public class Player
      * @param y - y coordinate
      */
     // line 306 "model.ump"
-    public void setCoords(int x, int y){
+    public void setCoords(int x, int y) {
         this.x = x;
         this.y = y;
     }
@@ -565,15 +618,12 @@ public class Player
      * Sets the x coordinate only
      * @param aX - x coordinate
      */
-    public void setX(int aX){x = aX;}
+    public void setX(int aX) {x = aX;}
     /**
      * Sets the y coordinate only
      * @param aY - y coordinate
      */
-    public void setY(int aY)
-    {
-        y = aY;
-    }
+    public void setY(int aY) { y = aY; }
 
     /** @return the x coordinate of the player's position */
     public int getX() {return x;}
