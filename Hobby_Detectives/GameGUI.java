@@ -36,7 +36,7 @@ public class GameGUI {
 
     /**
      * Creates the Menu at the Top
-     * @param frame
+     * @param frame - JFrame object
      */
     public void createMenu(JFrame frame){
         JMenu menu;
@@ -60,7 +60,7 @@ public class GameGUI {
     /**
      * Builds the panels with all the buttons
      * @param frame
-     */
+
     public void buildFieldPanel(JFrame frame){
         JPanel fieldJPanel = new JPanel();
         fieldJPanel.setLayout(new GridLayout(15,1));
@@ -90,12 +90,12 @@ public class GameGUI {
         fieldJPanel.add(rollDicPanel, SwingConstants.CENTER);
 
         frame.add(fieldJPanel, BorderLayout.EAST);
-    }
+    }*/
 
     /**
      * Puts all the names of the rooms in the room
-     * @param g
-     * @param e
+     * @param g - Graphics object
+     * @param e - map of each room and their names
      */
     public void buildRoomName(Graphics g, Map.Entry<String, Room> e){
         switch(e.getValue().getName()){
@@ -117,8 +117,8 @@ public class GameGUI {
     }
 
     /**
-     * Builds characters an puts onto the board
-     * @param g
+     * Builds characters a puts onto the board
+     * @param g - Graphics object
      */
     public void buildCharacters(Graphics g){
         for(Map.Entry<String,Player> e : b.getPlayersMap().entrySet()){
@@ -161,16 +161,14 @@ public class GameGUI {
 
     /**
      * Adds Mouse Motion Listener to the GUI
-     * @param frame
+     * @param frame  - The JFrame in which the mouse activity is being performed
      */
     public void frameMouseListener(JFrame frame){
         frame.addMouseListener(
         new MouseListener(){
         
             @Override
-            public void mouseClicked(MouseEvent e){
-
-            }
+            public void mouseClicked(MouseEvent e){ }
 
             @Override
             public void mousePressed(MouseEvent e){
@@ -180,8 +178,10 @@ public class GameGUI {
 
             @Override
             public void mouseReleased(MouseEvent e){
-                if(!selectedPlayer.getActivePlayer()){return;}
-                String direction = "";
+                if(!selectedPlayer.getActivePlayer() || selectedPlayer.getMoves()==0 ||
+                        (!selectedPlayer.getActivePlayer() && selectedPlayer.getMoves()==0)){return;}
+
+                String direction = null;
                 if(selectedPlayer.getX() == (e.getX()/24)-1){
                     direction = "Right";
                 }else if(selectedPlayer.getX() == (e.getX()/24)+1){
@@ -190,32 +190,35 @@ public class GameGUI {
                     direction = "Up";
                 } else if(selectedPlayer.getY() == (e.getY()/24)-2-1){
                     direction = "Down";
-                }
+                } else{return;}
 
                 GameGUI.setDirection(direction);
-
-                b.movePlayer(selectedPlayer.getName(), direction, selectedPlayer.getX(), selectedPlayer.getY(), new int[5+1][2]);
+                selectedPlayer.movement(b, direction);
+                //b.movePlayer(selectedPlayer.getName(), direction, selectedPlayer.getX(), selectedPlayer.getY(), new int[5+1][2]);
 
                 for(Map.Entry<String, Room> entry : b.getRooms().entrySet()){
                     System.out.println(entry.getValue().getName()+": " 
                     + entry.getValue().inRoom((e.getX()/24), ((e.getY()/24)-1)));
                 }
                 frame.repaint();
+
+                if(selectedPlayer.getMoves()==0){
+                    showInformation("You have exhausted all your moves. Please hit OK, then enter " +
+                            "in the console to proceed.");
+                }
             }
 
             @Override
-            public void mouseEntered(MouseEvent e){
-
-            }
-
+            public void mouseEntered(MouseEvent e){ }
             @Override
-            public void mouseExited(MouseEvent e){
-                
-            }
+            public void mouseExited(MouseEvent e){ }
         }
         );
     }
 
+    //----------------------------------------------------
+    //            clicked Getters and Setters
+    //----------------------------------------------------
     public Boolean getClicked(){
         return clicked;
     }
@@ -223,7 +226,9 @@ public class GameGUI {
     public void setClicked(Boolean c){
         clicked = c;
     }
-
+    //----------------------------------------------------
+    //           direction Getters and Setters
+    //----------------------------------------------------
     public static void setDirection(String d){
         direction = d;
     }
@@ -251,7 +256,7 @@ public class GameGUI {
         System.out.println("Size: " + b.getRooms().size());
         
 
-        JPanel pn=new JPanel(){
+        JPanel pn = new JPanel(){
             @Override
             public void paint(Graphics g) {
 
@@ -313,17 +318,17 @@ public class GameGUI {
 
     /**
      * Returns all the cells in the board
-     * @return
+     * @return Cel[][] of the board
      */
     public Cell[][] returnCells(){
         return this.b.getCells();
     }
 
     /**
-     * Gets the player position
-     * @param x
-     * @param y
-     * @return
+     * Gets the player at a given position on the board position
+     * @param x - x coordinate
+     * @param y - y coordinate
+     * @return Player object of the player at the given coordinate
      */
     public Player getPlayer(int x, int y){
         int xp = x/24;
@@ -338,22 +343,45 @@ public class GameGUI {
         return null;
     }
 
+    /**
+     * Asks user a question and provides an input text pane for the users response
+     * @param message - Question to the user
+     * @return String of the user's response
+     */
     public String askQuestion(String message){   
-        String output=JOptionPane.showInputDialog(this.frame,message);
+        String output = JOptionPane.showInputDialog(this.frame,message);
         //System.out.println(output);
         return output;
     }
 
+    /**
+     * Displays a message to the user via the option pane
+     * @param messageString
+     */
     public void showInformation(String messageString){
         JOptionPane.showMessageDialog(this.frame,messageString);
     }
 
-    public static void main(String[] args) {
-        Board b = new Board();
-        b.buildBoard();
-        new GameGUI(b);
+    /**
+     * Creates and JOptionPane which contains a drop-down of the provided choices with the given message
+     * @param message - the type of choice to be selected from
+     * @param choices - all the user's choices/options
+     * @return String of the choice the user selected
+     */
+    public String showComboOptions(String message, String[] choices){
+        JComboBox<String> choiceBox = new JComboBox<>(choices);
+        int result = JOptionPane.showOptionDialog(null, choiceBox, "Select a "+ message,
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
+
+        if(result == JOptionPane.OK_OPTION){ return (String) choiceBox.getSelectedItem(); }
+        return null;
     }
 
+    /**
+     * Informational buttons used to
+     * @param msg
+     * @return
+     */
     public String showInfoButtons(String msg){
         String[] buttons = { "Check Hand", "Check Cards Known", "Make Final Guess", "Make Roll" };
 
@@ -362,5 +390,11 @@ public class GameGUI {
 
         return (rc+1) + "";
     }
-    
+
+
+    public static void main(String[] args) {
+        Board b = new Board();
+        b.buildBoard();
+        new GameGUI(b);
+    }
 }
