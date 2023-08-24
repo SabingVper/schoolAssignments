@@ -37,7 +37,7 @@ public class Game
   //Game Attributes 
   private GameGUI gui;
 
-  private Player[] turnOrder; 
+  private Player[] turnOrder;
 
   private Board board; 
 
@@ -2226,14 +2226,14 @@ public class Game
     Hand tmp;// Returned hand object  
   
     try {
-      tmp = turnOrder[getPlayerActive()].solveAttempt(board);  
+      tmp = turnOrder[getPlayerActive()].solveAttempt(board, gui);
     } catch (Exception e) {
       message("You failed to make a solve attempt. Please try again next turn.");
       gameVars.setGuessMade(true);
       return;
     }
     message("Your guess: " + tmp.toString());
-    // Checks if length of hand matches and cards match\  
+    // Checks if length of hand matches and cards match
     if(tmp.numberOfCards() == solution.numberOfCards() && solution.containsAll(tmp)) {
       message("You have successfully guessed the solution.");
 
@@ -2280,9 +2280,8 @@ public class Game
 
   
 
-    // Message rolled values  
-
-    this.gui.showInformation("You rolled a " + dice1.getValue() + " and " + dice2.getValue() + ". You Have " 
+    // Message rolled values
+    gui.showInformation("You rolled a " + dice1.getValue() + " and " + dice2.getValue() + ". You Have "
     + (dice1.getValue() + dice2.getValue()) + " moves");
 
     //message("You rolled a " + dice1.getValue() + " and " + dice2.getValue());  
@@ -2301,12 +2300,28 @@ public class Game
       color = "red";
     }
 
-    this.gui.showInformation(turnOrder[getPlayerActive()].getName() + " your color is " + color +
-    ". Please move the " + color 
-    + " dot where you want to go. You can only move 1 square at a time");
-    turnOrder[getPlayerActive()].movement(board, (dice1.getValue() + dice2.getValue()));  
+    gui.showInformation(turnOrder[getPlayerActive()].getName() + " your color is " + color +
+    ". Please move the " + color + " dot where you want to go. You can only move 1 square at a time");
 
-  
+    //Movement begins
+    int moves = (dice1.getValue() + dice2.getValue());
+    Player currentPlayer = turnOrder[getPlayerActive()];
+    currentPlayer.setMoves(moves);
+
+    //Ensures moves only take place whilst there are moves available
+    while(currentPlayer.getMoves() > 0){
+      System.out.println(currentPlayer.getName()+" you have "+currentPlayer.getMoves() + " moves.");
+
+      //Breaks out of loop to move on to the next player if an error occurs
+      if(!currentPlayer.movement(board)){break;}
+
+      gui.frame.repaint();
+    }
+
+    if(currentPlayer.isInRoom()){
+      Hand guessHand = currentPlayer.guess(board, gui);
+      System.out.println(guessHand.getCards());
+    }
 
     gameVars.setMovementMade(true); 
   } 
