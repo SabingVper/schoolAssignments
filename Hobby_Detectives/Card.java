@@ -6,7 +6,7 @@ import java.util.*;
 
 // line 2 "model.ump"
 // line 262 "model.ump"
-public class Card {
+public class Card implements Comparable {
 
   //------------------------
   // ENUMERATIONS
@@ -302,9 +302,9 @@ public class Card {
    * @return true if 2 cards are equal
    */
   // line 134 "model.ump"
-   public boolean equals(Card c){
+  /* public boolean equals(Card c){
     return c.category.equals(this.category) && c.type.equals(this.type);
-  }
+  } */
 
 
   /**
@@ -318,6 +318,37 @@ public class Card {
 			return -1 * c.type.compareTo(this.type);
     }
     return -1 * c.category.compareTo(this.category);
+  }
+  
+  @Override
+  public int compareTo(Object obj) {
+    Card other = (Card) obj;
+    return compareTo(other);
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((category == null) ? 0 : category.hashCode());
+    result = prime * result + ((type == null) ? 0 : type.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj)
+      return true;
+    if (obj == null)
+      return false;
+    if (getClass() != obj.getClass())
+      return false;
+    Card other = (Card) obj;
+    if (category != other.category)
+      return false;
+    if (type != other.type)
+      return false;
+    return true;
   }
 
 }

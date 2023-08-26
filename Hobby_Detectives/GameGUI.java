@@ -56,6 +56,7 @@ public class GameGUI {
             @Override
             public void actionPerformed(ActionEvent e){
                 frame.dispose();
+                System.exit(0);
             }
         });
         menu.add(i1);

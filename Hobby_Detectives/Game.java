@@ -1569,7 +1569,7 @@ public class Game
 
   { 
 
-    timeoutStartTurnToMakeTurnHandler = new TimedEventHandler(this,"timeoutStartTurnToMakeTurn",5); 
+    timeoutStartTurnToMakeTurnHandler = new TimedEventHandler(this,"timeoutStartTurnToMakeTurn",2); 
 
   } 
 
@@ -1589,7 +1589,7 @@ public class Game
 
   { 
 
-    timeoutEndTurnToStartTurnHandler = new TimedEventHandler(this,"timeoutEndTurnToStartTurn",5); 
+    timeoutEndTurnToStartTurnHandler = new TimedEventHandler(this,"timeoutEndTurnToStartTurn",2); 
 
   } 
 
@@ -1609,7 +1609,7 @@ public class Game
 
   { 
 
-    timeoutLookHandToIdleHandler = new TimedEventHandler(this,"timeoutLookHandToIdle",5); 
+    timeoutLookHandToIdleHandler = new TimedEventHandler(this,"timeoutLookHandToIdle",2); 
 
   } 
 
@@ -1629,7 +1629,7 @@ public class Game
 
   { 
 
-    timeoutLookCardsKnownToIdleHandler = new TimedEventHandler(this,"timeoutLookCardsKnownToIdle",5); 
+    timeoutLookCardsKnownToIdleHandler = new TimedEventHandler(this,"timeoutLookCardsKnownToIdle",2); 
 
   } 
 
@@ -2178,7 +2178,7 @@ public class Game
    private void displayKnown(){ 
 
     // Message the players known cards  
-    this.gui.showInformation("Guess made were: " + turnOrder[getPlayerActive()].getHand().toString());
+    // this.gui.showInformation("Guess made were: " + turnOrder[getPlayerActive()].getHand().toString());
   
 
     //message("Cards you know: "); //turnOrder[getPlayerActive()]   
@@ -2208,19 +2208,19 @@ public class Game
     try {
       tmp = turnOrder[getPlayerActive()].solveAttempt(board, gui);
     } catch (Exception e) {
-      message("You failed to make a solve attempt. Please try again next turn.");
       gameVars.setGuessMade(true);
+      this.gui.showInformation("You failed to make a solve attempt. Please try again next turn.");
       return;
     }
     message("Your guess: " + tmp.toString());
     // Checks if length of hand matches and cards match
     if(tmp.numberOfCards() == solution.numberOfCards() && solution.containsAll(tmp)) {
-      message("You have successfully guessed the solution.");
+      this.gui.showInformation("You have successfully guessed the solution.");
 
       // if true then set game to won 
       setGameReadyFinished(true);
     } else {
-      message("You have unsuccessfully guessed the solution.\nYou will sit out the rest of the game.");
+      this.gui.showInformation("You have unsuccessfully guessed the solution.\nYou will sit out the rest of the game.");
     }
 
     	 
@@ -2323,18 +2323,19 @@ public class Game
    * @return
    */
   private Card askGuess(Hand hand) {
-    for(int i = (getPlayerActive() == 3) ? 0 : getPlayerActive() +1; i != getPlayerActive(); i = (i+1 == turnOrder.length) ? 0 : i++) {
+    if(hand == null) return null;
+    for(int i = (getPlayerActive() == 3) ? 0 : getPlayerActive() +1; i != getPlayerActive(); i = (i+1 == turnOrder.length) ? 0 : i+1) {
       this.gui.showInformation(turnOrder[i].getName() + " is looking at their hand.");
-      if(turnOrder[i].getHand().getCards().stream().anyMatch((Card c) -> !hand.contains(c))) {
+      if(turnOrder[i].getHand().getCards().stream().anyMatch(hand::contains)) {
         List<Card> cards = turnOrder[i].getHand().getCards()
-          .stream().filter((Card c) -> !hand.contains(c)).toList();
+          .stream().filter(hand::contains).toList();
         if(cards.size() == 1) {
           this.gui.showInformation(turnOrder[i].getName() + " is showing you the " + cards.get(0));
           return cards.get(0);
         }
         String choice = null;
         do {
-          choice = this.gui.showComboOptions(turnOrder[i].getName() + " choose a card to show.", (String[])cards.stream().map(c -> c.toString()).toArray());
+          choice = this.gui.showComboOptions(turnOrder[i].getName() + " choose a card to show.", cards.stream().map(c -> c.toString()).toArray(String[]::new));
         } while(choice == null);
         final String choiceGiven = choice;
         return cards.stream().filter(c -> !c.toString().equals(choiceGiven)).findFirst().get();
