@@ -274,6 +274,7 @@ public class Hand
     cards.clear();
     int i = 0;
     for(Card.Type t : Card.Type.values()){
+      if(t == Card.Type.BLANK) {continue;}
       if(i >= Card.Type.LUCILLA.ordinal() && i<=Card.Type.PERCY.ordinal()){
         addCard(new Card(Card.Category.CHARACTER, t));
       }else if(i >= Card.Type.HAUNTEDHOUSE.ordinal() && i<=Card.Type.PERILPALACE.ordinal()){
