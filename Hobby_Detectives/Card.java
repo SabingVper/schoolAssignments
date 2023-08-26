@@ -12,8 +12,8 @@ public class Card {
   // ENUMERATIONS
   //------------------------
 
-  public enum Category { CHARACTER, ROOM, WEAPON }
-  public enum Type { LUCILLA, BERT, MALINA, PERCY, HAUNTEDHOUSE, MANICMANOR, VISITATIONVILLA, CALAMITYCASTLE, PERILPALACE, BROOM, SCISSORS, KNIFE, SHOVEL, IPAD }
+  public enum Category { CHARACTER, ROOM, WEAPON, BLANK }
+  public enum Type { LUCILLA, BERT, MALINA, PERCY, HAUNTEDHOUSE, MANICMANOR, VISITATIONVILLA, CALAMITYCASTLE, PERILPALACE, BROOM, SCISSORS, KNIFE, SHOVEL, IPAD, BLANK }
 
   //------------------------
   // MEMBER VARIABLES
@@ -55,6 +55,13 @@ public class Card {
     typ.add("Knife"); 
     typ.add("Shovel"); 
     typ.add("iPad");
+  }
+  /**
+   * This is used as a blank card.
+   */
+  public Card() {
+    this.category = category.BLANK;
+    this.type = type.BLANK;
   }
 
   //------------------------
