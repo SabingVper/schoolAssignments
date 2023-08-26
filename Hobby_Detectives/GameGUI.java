@@ -165,11 +165,7 @@ public class GameGUI {
      */
     public void frameMouseListener(JFrame frame){
         frame.addMouseListener(
-        new MouseListener(){
-        
-            @Override
-            public void mouseClicked(MouseEvent e){ }
-
+                new MouseAdapter(){
             @Override
             public void mousePressed(MouseEvent e){
                 selectedPlayer = getPlayer(e.getX(), e.getY());
@@ -178,7 +174,8 @@ public class GameGUI {
 
             @Override
             public void mouseReleased(MouseEvent e){
-                if(!selectedPlayer.getActivePlayer() || selectedPlayer.getMoves()==0 ||
+                if(selectedPlayer == null){return;}
+                else if(!selectedPlayer.getActivePlayer() || selectedPlayer.getMoves()==0 ||
                         (!selectedPlayer.getActivePlayer() && selectedPlayer.getMoves()==0)){return;}
 
                 String direction = null;
@@ -193,25 +190,20 @@ public class GameGUI {
                 } else{return;}
 
                 GameGUI.setDirection(direction);
-                selectedPlayer.movement(b, direction);
+                selectedPlayer.movement(b, direction, GameGUI.this);
                 //b.movePlayer(selectedPlayer.getName(), direction, selectedPlayer.getX(), selectedPlayer.getY(), new int[5+1][2]);
 
                 for(Map.Entry<String, Room> entry : b.getRooms().entrySet()){
-                    System.out.println(entry.getValue().getName()+": " 
+                    System.out.println(entry.getValue().getName()+": "
                     + entry.getValue().inRoom((e.getX()/24), ((e.getY()/24)-1)));
                 }
                 frame.repaint();
 
                 if(selectedPlayer.getMoves()==0){
-                    showInformation("You have exhausted all your moves. Please hit OK, then enter " +
+                    showInformation("You have exhausted all your moves. Please hit OK, then ENTER " +
                             "in the console to proceed.");
                 }
             }
-
-            @Override
-            public void mouseEntered(MouseEvent e){ }
-            @Override
-            public void mouseExited(MouseEvent e){ }
         }
         );
     }
@@ -370,7 +362,7 @@ public class GameGUI {
      */
     public String showComboOptions(String message, String[] choices){
         JComboBox<String> choiceBox = new JComboBox<>(choices);
-        int result = JOptionPane.showOptionDialog(null, choiceBox, "Select a "+ message,
+        int result = JOptionPane.showOptionDialog(null, choiceBox, message,
                 JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, null, null);
 
         if(result == JOptionPane.OK_OPTION){ return (String) choiceBox.getSelectedItem(); }
