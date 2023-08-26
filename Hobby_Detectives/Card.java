@@ -6,8 +6,7 @@ import java.util.*;
 
 // line 2 "model.ump"
 // line 262 "model.ump"
-public class Card
-{
+public class Card {
 
   //------------------------
   // ENUMERATIONS
@@ -35,8 +34,8 @@ public class Card
     if(!sameType(aCategory, aType)){
       throw new Error("Wrong type");
     }
-    category = aCategory;
-    type = aType;
+    this.category = aCategory;
+    this.type = aType;
     cat = new ArrayList<String>(); 
     cat.add("Character"); 
     cat.add("Room"); 
@@ -183,6 +182,7 @@ public class Card
 
   /**
    * Gets the index of the string of a type
+   *
    * @param aTyp The string used to find the index
    * @return Index of the String
    */
@@ -200,11 +200,11 @@ public class Card
    */
   // line 51 "model.ump"
    public boolean sameType(Category c, Type t){
-    if(c.ordinal() == Category.CHARACTER.ordinal()){
+    if(c == Category.CHARACTER){
       return isACharacter(t);
-    }else if(c.ordinal() == Category.ROOM.ordinal()){
+    }else if(c == Category.ROOM){
       return isARoom(t);
-    }else if(c.ordinal() == Category.WEAPON.ordinal()){
+    }else if(c == Category.WEAPON){
       return isAWeapon(t);
     }
     return false;
@@ -301,17 +301,16 @@ public class Card
 
 
   /**
-   * 
    * Checks if 2 cards are equal
    * @param c The card to check
    * @return returns whether the card is greater(1), less(-1) or equal(0) than this card
    */
   // line 143 "model.ump"
-   public int compareTo(Card c){
+  public int compareTo(Card c){
     if(c.category.compareTo(this.category) == 0) {
-			return -1* c.type.compareTo(this.type);
-		}
-    return -1*c.category.compareTo(this.category);
+			return -1 * c.type.compareTo(this.type);
+    }
+    return -1 * c.category.compareTo(this.category);
   }
 
 }
