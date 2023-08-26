@@ -22,11 +22,12 @@ public class Player
     private int x;
     private int y;
     private List<Hand> guessesMade;
-    private List<Card> cardsShown;
+    private Hand cardsKnown;
     private boolean solveAttempt = false;
     private boolean activePlayer = false;
-    public int moves = 0;
-    public int[][] movementLog;
+    private int moves = 0;
+    private int[][] movementLog;
+    private List<String> validMove;
     private boolean inRoom;
 
     //------------------------
@@ -37,8 +38,9 @@ public class Player
         this.name = name;
         this.x = x;
         this.y = y;
+        cardsKnown = new Hand();
+        validMove = new ArrayList<>();
         guessesMade = new ArrayList<>();
-        cardsShown = new ArrayList<>();
     }
 
 
@@ -69,17 +71,25 @@ public class Player
             return false;
         }
 
-        System.out.println(b);
+        //System.out.println(b);
         while(true){
             System.out.print("\nSelect a direction to move (up|down|left|right): ");
 
             //Gets user input
             String move = getCapitalisedUserInput();
-            if(moves<=0){return true;}
+            if(moves<=0 || validMove.size() >= 4){
+                validMove.clear();
+                moves = 0;
+                return true;
+            }
 
+            if(move == null || move.isEmpty()){
+                System.out.println("\nInvalid input. Try again.");
+                continue;
+            }
             //Ensures input is a valid action
             if(!(move.equals("Up")||move.equals("Left")||
-                    move.equals("Down")||move.equals("Right")) || move.isEmpty() || move == null){
+                    move.equals("Down")||move.equals("Right"))){
                 System.out.println("\nInvalid input. Type \'Up\', \'Down\', \'Left\', or \'Right\' to make a move.");
                 continue;
             }
@@ -89,6 +99,8 @@ public class Player
             /* Checks player position for room entrance and adds player to the room whilst making
             the player's guess ability available */
             if(playerMoved){
+                validMove.clear();
+
                 String room = b.getRoom(name,x,y);
                 if(!room.isEmpty()) {
                     moves = 1;
@@ -99,6 +111,13 @@ public class Player
                 break;
             }
 
+            if(!validMove.contains(move)){ validMove.add(move);}
+
+            if(validMove.size() >= 4){
+                System.out.println("ERROR: Cannot revisit cells. No valid moves available, you are in a deadlock state.\n" +
+                        "Your turn has been terminated. Hit ENTER in the console to proceed.");
+                continue;
+            }
             System.out.println("\nCannot move in that direction. The \'"+move+"\' direction cannot be accessed.");
         }
 
@@ -107,7 +126,6 @@ public class Player
         movementLog[movementLog.length - moves][1] = y;
         moves--;
 
-        //if(inRoomGuess) {guess(b);}//Begins the guess action
         return true;
     }
 
@@ -124,42 +142,50 @@ public class Player
         }
 
         System.out.println("Player has "+moves+" moves.");
-        if(exitRoom(b, gui)) {return;} //Allows the user/player their exit options for the room they are in, if any
+        //if(exitRoom(b, gui)) {return;}
 
-        while(true){
-            //System.out.println(direction);
 
-            //Ensures input is a valid action
-            if(!(direction.equals("Up")||direction.equals("Left")||
-                    direction.equals("Down")||direction.equals("Right")) || direction.isEmpty() || direction == null){
-                System.out.println("\nInvalid input. Type \'Up\', \'Down\', \'Left\', or \'Right\' to make a move.");
-                continue;
-            }
+        //Ensures input is a valid action
+        if(!(direction.equals("Up")||direction.equals("Left")||
+                direction.equals("Down")||direction.equals("Right")) || direction.isEmpty() || direction == null){
+            gui.showInformation("\nInvalid input. Type \'Up\', \'Down\', \'Left\', or \'Right\' to make a move.");
+            return;
+        }
 
-            //Ensures that movement is possible and position being moved to is not occupied
-            boolean playerMoved = b.movePlayer(name, direction, x, y, movementLog);
+        //Ensures that movement is possible and position being moved to is not occupied
+        boolean playerMoved = b.movePlayer(name, direction, x, y, movementLog);
+        if(playerMoved){
             /* Checks player position for room entrance and adds player to the room whilst making
             the player's guess ability available */
-            if(playerMoved){
-                String room = b.getRoom(name,x,y);
-                if(!room.isEmpty()) {
-                    moves = 1;
-                    Room r = b.getRoom(room);
-                    r.addPlayer(this, b);
-                    inRoom = true;
-                }
-                break;
+            validMove.clear();
+
+            String room = b.getRoom(name,x,y);
+            if(!room.isEmpty()) {
+                moves = 1;
+                Room r = b.getRoom(room);
+                r.addPlayer(this, b);
+                inRoom = true;
+            }
+        }
+        else{
+            if(!validMove.contains(direction)){ validMove.add(direction);}
+
+            if(validMove.size() >= 4){
+                gui.showInformation("Error: Cannot revisit cells, you are in a deadlock state.\n" +
+                        "Your turn has been terminated.");
+            }
+            else{
+                gui.showInformation("Error: Cannot move in that direction. The \'"+direction+
+                        "\' direction cannot be accessed.");
             }
 
-            System.out.println("\nCannot move in that direction. The \'"+direction+"\' direction cannot be accessed.");
+            return;
         }
 
         //Tracks of movements made
         movementLog[movementLog.length - moves][0] = x;
         movementLog[movementLog.length - moves][1] = y;
         moves--;
-
-        //if(inRoomGuess) {guess(b);}//Begins the guess action
     }
 
     /**
@@ -219,7 +245,10 @@ public class Player
      */
     // line 84 "model.ump"
     public Hand guess(Board b, GameGUI gui) {
-        if(solveAttempt){throw new Error("Player has already made solve attempt");}
+        if(solveAttempt){
+            gui.showInformation("Error: "+name+" has already made solve attempt.\n Cannot make a guess.");
+            return null;
+        }
         Hand guess = performGuessAndSolve(b, gui, "Guess");
         guessesMade.add(guess);
         return guess;
@@ -239,7 +268,11 @@ public class Player
      */
     // line 100 "model.ump"
     public Hand solveAttempt(Board b, GameGUI gui) {
-        if(solveAttempt){throw new Error("Player has already made solve attempt");}
+        if(solveAttempt){
+            gui.showInformation("Error: "+name+" has already made solve attempt.\n " +
+                    "Cannot make a another solve attempt.");
+            return null;
+        }
         Hand solveAttemptHand = performGuessAndSolve(b, gui, "Solve Attempt");
         if(solveAttemptHand==null){ return null; }
 
@@ -272,7 +305,7 @@ public class Player
         }
 
         //Show the player their previous guesses before they proceed to making further guesses
-        if(!guessesMade.isEmpty()){gui.showInformation(getPrevGuessString());}
+        if(!guessesMade.isEmpty()){gui.showInformation("Previous Guesses: \n" + getPrevGuessString());}
 
 
         //Guess/Accusation Room - Defaulted to player's current room
@@ -335,7 +368,7 @@ public class Player
                 characCard = getCharacterCard(character);
                 //Ensures the character is not within the player's own hand
                 Card finalCharacCard = characCard;
-                if(!hand.getCards().stream().anyMatch(c->c.equals(finalCharacCard))){break;}
+                if(hand.getCards().stream().noneMatch(c->c.equals(finalCharacCard))){break;}
 
                 //System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
                 gui.showInformation("Invalid "+guessOrSolve+": Card is in your hand. Try again.");
@@ -385,7 +418,7 @@ public class Player
                 weaponCard = getWeaponCard(weapon);
                 //Ensures the weapon is not within the player's own hand
                 Card finalWeaponCard = weaponCard;
-                if(!hand.getCards().stream().anyMatch(c->c.equals(finalWeaponCard))){break;}
+                if(hand.getCards().stream().noneMatch(c->c.equals(finalWeaponCard))){break;}
 
                 //System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
                 gui.showInformation("Invalid "+guessOrSolve+": Card is in your hand. Try again.");
@@ -467,15 +500,15 @@ public class Player
     /**
      *
      * ---------------------------------------------------------------------------------
-     * HELPER METHOD: performGuessAndSolve() (7/7)
+     * HELPER METHOD: getPrevGuessString() (7/7)
      * ---------------------------------------------------------------------------------
      * Returns a String of all the player's previous guesses
      */
     // line 279 "model.ump"
-    private String getPrevGuessString(){
-        StringBuilder guesses = new StringBuilder("Previous Guesses: \n");
+    public String getPrevGuessString(){
+        StringBuilder guesses = new StringBuilder();
         for(int i=0; i<guessesMade.size(); i++) {
-            guesses.append("\t").append(i+1).append(". ").append(guessesMade.get(i).getCards());
+            guesses.append("\t").append(i+1).append(". ").append(guessesMade.get(i)).append("\n");
         }
         return guesses.toString();
     }
@@ -493,28 +526,18 @@ public class Player
      */
     // line 295 "model.ump"
     private String capitaliseFirstLetter(String cardName) {
-        if(cardName.isEmpty()||cardName==null){return null;}
+        if(cardName.isEmpty()||cardName == null){return null;}
         return cardName.substring(0,1).toUpperCase()+cardName.substring(1).toLowerCase();
     }
-
-
-
-
-    //-------------------------------------------------------------------------
-    //                          GETTERS  AND  SETTERS
-    //-------------------------------------------------------------------------
-
     /**
-     * @return String of the player's name
-     */
-    public String getName() {return name;}
-
-    /**
+     * ---------------------------------------------------------------------------------
+     * GENERAL ACTION HELPER METHOD
+     * ---------------------------------------------------------------------------------
      * Gets and returns the user's input, whilst ensuring the first letter of the
      * card being referenced is capitalised
      * @return String of user input with the first letter capitalised
      */
-    public String getCapitalisedUserInput() {
+    private String getCapitalisedUserInput() {
         String input;
         InputStreamReader isr = new InputStreamReader(System.in);
         BufferedReader br = new BufferedReader(isr);
@@ -526,8 +549,18 @@ public class Player
         return input;
     }
 
+    //-------------------------------------------------------------------------
+    //                          GETTERS  AND  SETTERS
+    //-------------------------------------------------------------------------
+
     /**
-     * @return a boolean indicating whether the player is in a room or not
+     * @return String of the player's name
+     */
+    public String getName() {return name;}
+
+
+    /**
+     * @return True is player is in room, false if player is not in a room
      */
     public boolean isInRoom(){return inRoom;}
 
@@ -548,6 +581,8 @@ public class Player
     public void setMoves(int moves) {
         this.moves = moves;
         movementLog = new int[moves+1][2];
+        movementLog[0][0] = x;
+        movementLog[0][0] = y;
     }
 
         //-----------------------------------------------
@@ -565,22 +600,41 @@ public class Player
      */
     public boolean setHand(Hand aHand) {
         this.hand = aHand;
+        cardsKnown.setCards(hand.getCards());
         return true;
     }
 
         //-----------------------------------------------
-        //      guessesMade GETTERS AND SETTERS
+        //      cardsKnown GETTERS AND SETTERS
         //-----------------------------------------------
     /**
      * @return list of all guesses made by the player as a String
      */
-    public List<Hand> getGuessesMade() { return guessesMade; }
+    public Hand getCardsKnown() { return cardsKnown; }
 
     /**
      * Sets the list for guesses the user has already attempted to make
-     * @param aGuessesMade - list of hands containing the player's guessed
+     * @param cardsKnown - list of hands containing the player's guessed
      */
-    public void setGuessesMade(List<Hand> aGuessesMade) { this.guessesMade = aGuessesMade;}
+    public void seCardsKnown(Hand cardsKnown) { this.cardsKnown = cardsKnown; }
+
+    /**
+     * Adds hand to cardsKnown List
+     * @return boolean of if the hand was added successfully
+     */
+    public boolean addToCardsKnown(Card card){ return this.cardsKnown.addCard(card); }
+
+    /**
+     * @return a String of all the player's previous guesses
+     */
+    // line 279 "model.ump"
+    public String getCardsKnownString(){
+        StringBuilder guesses = new StringBuilder();
+        for(int i=0; i<cardsKnown.getCards().size(); i++) {
+            guesses.append("\t").append(i+1).append(". ").append(cardsKnown.getCard(i)).append("\n");
+        }
+        return guesses.toString();
+    }
 
 
         //-----------------------------------------------
@@ -651,29 +705,7 @@ public class Player
     /** @return the y coordinate of the player's position */
     public int getY() {return y;}
 
-    // ---------------------------------------------
-    //       cardsShown GETTERS AND SETTERS AND ADDER
-    // --------------------------------------------
 
-    /**
-     * Gets cards shown
-     * @return
-     */
-    public List<Card> getCardsShown() {
-        return cardsShown;
-    }
-
-    /**
-     * Sets cardShown
-     * @param cardsShown
-     */
-    public void setCardsShown(List<Card> cardsShown) {
-        this.cardsShown = cardsShown;
-    }
-
-    public boolean addCardsShown(Card card) {
-        return this.cardsShown.add(card);
-    }
 
     @Override
     public String toString()
