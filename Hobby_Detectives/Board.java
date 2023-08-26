@@ -136,7 +136,7 @@ public class Board
 
 	/**
 	 * checks if the move is valid by checking if the next square is occupied, not a wall, within the board limits,
-	 * and the player hasnt already gone through the cell
+	 * and the player hasn't already gone through the cell
 	 * @param direction
 	 * @param x
 	 * @param y
