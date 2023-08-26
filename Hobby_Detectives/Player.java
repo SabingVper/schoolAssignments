@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.function.Predicate;
 
 
 // line 2 "model.ump"
@@ -58,7 +59,7 @@ public class Player
      */
     // line 30 "model.ump"
     public boolean movement(Board b){
-        if(exitRoom(b)) {return true;}
+        if(exitRoom(b, null)) {return true;}
 
         //Check to ensure the player has a right to make moves
         if(!activePlayer || solveAttempt || (!activePlayer && solveAttempt)){
@@ -113,7 +114,7 @@ public class Player
      * @param b         - Board object
      * @param direction - direction for the player's movement
      */
-    public void movement(Board b, String direction) {
+    public void movement(Board b, String direction, GameGUI gui) {
         //Check to ensure the player has a right to make moves
         if(moves<=0 || !activePlayer || solveAttempt || (!activePlayer && solveAttempt)){
             movementLog = null;
@@ -121,7 +122,7 @@ public class Player
         }
 
         System.out.println("Player has "+moves+" moves.");
-        if(exitRoom(b)) {return;} //Allows the user/player their exit options for the room they are in, if any
+        if(exitRoom(b, gui)) {return;} //Allows the user/player their exit options for the room they are in, if any
 
         while(true){
             //System.out.println(direction);
@@ -164,7 +165,7 @@ public class Player
      * @param b - Board class
      * @return True if player is in a room and exits, False otherwise
      */
-    public boolean exitRoom(Board b) {
+    public boolean exitRoom(Board b, GameGUI gui) {
         String room = b.getRoom(name, x, y);
         Room r;
         String move;
@@ -172,15 +173,22 @@ public class Player
             r = b.getRoom(room);
             String def = "";
             Map<String, Cell> exits = r.getExits();
-            String res = "\nSelect a door to exit (";
-            for(String s : exits.keySet()) {
-                if(def.isEmpty()) {def = s;}
-                res = res + s + "|";
-            }
-            res = res + "): ";
-            System.out.print(res);
+            if(gui == null) {
+                String res = "\nSelect a door to exit (";
+                for (String s : exits.keySet()) {
+                    if (def.isEmpty()) {
+                        def = s;
+                    }
+                    res = res + s + "|";
+                }
+                res = res + "): ";
+                System.out.print(res);
 
-            move = getCapitalisedUserInput();
+                move = getCapitalisedUserInput();
+            }
+            else{
+                move = gui.showComboOptions("Select a door to exit:", exits.keySet().toArray(new String[0]));
+            }
             //Ensures input is a valid action
             if(!(exits.containsKey(move)) || move.isEmpty() || move == null){
                 move = def;
@@ -261,10 +269,12 @@ public class Player
             throw new Error("You are not in a room, no "+guessOrSolve+"(es/s) can be made.");
         }
 
-        if(!guessesMade.isEmpty()){printPrevGuesses();}
+        //Show the player their previous guesses before they proceed to making further guesses
+        if(!guessesMade.isEmpty()){gui.showInformation(getPrevGuessString());}
+
 
         //Guess/Accusation Room - Defaulted to player's current room
-        Card roomCard = getRoomCard(roomName);
+        Card roomCard = getRoomCard(roomName.replace(" ", "").toUpperCase());
         if(hand.contains(roomCard)){
             //System.out.println("Your hand contains "+ roomName + " card. Cannot make a guess.");
             gui.showInformation("Your hand contains "+ roomName + " card. Cannot make a guess.");
@@ -279,7 +289,9 @@ public class Player
         //Guess/Accusation Weapon
         Card weaponCard = playerGuessOrAccuseWeapon(gui, guessOrSolve);
 
-        return createAndSetHand(List.of(roomCard, characCard, weaponCard));
+        Hand guessOrSolveHand = createAndSetHand(List.of(roomCard, characCard, weaponCard));
+        gui.showInformation(this.name + " your guess is: "+guessOrSolveHand);
+        return guessOrSolveHand;
     }
 
 
@@ -308,16 +320,20 @@ public class Player
             String character = getCapitalisedUserInput();
             */
 
-            String character = gui.showComboOptions("character: ", new String[]{"Lucilla", "Bert", "Malina", "Percy"});
+            String character = gui.showComboOptions("Select a character: ",
+                    new String[]{"Lucilla", "Bert", "Malina", "Percy"});
 
             if(character == null){continue;}
+            character = character.toUpperCase();
+
             //Ensures the input is a valid character name
-            if((character.equals("Lucilla")||character.equals("Bert")||
-                    character.equals("Malina")||character.equals("Percy"))){
+            if(character.equals("LUCILLA")||character.equals("BERT")||
+                    character.equals("MALINA")||character.equals("PERCY")){
 
                 characCard = getCharacterCard(character);
                 //Ensures the character is not within the player's own hand
-                if(!hand.contains(characCard)){break;}
+                Card finalCharacCard = characCard;
+                if(!hand.getCards().stream().anyMatch(c->c.equals(finalCharacCard))){break;}
 
                 //System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
                 gui.showInformation("Invalid "+guessOrSolve+": Card is in your hand. Try again.");
@@ -355,17 +371,19 @@ public class Player
             String weapon = getCapitalisedUserInput();
             */
 
-            String weapon = gui.showComboOptions("weapon: ", new String[]{"Broom", "Scissors", "Knife",
+            String weapon = gui.showComboOptions("Select a weapon: ", new String[]{"Broom", "Scissors", "Knife",
                     "Shovel", "iPad"});
-
             if(weapon == null){continue;}
+            weapon = weapon.toUpperCase();
+
             //Ensures the input is a valid weapon name
-            if(weapon.equals("Broom")||weapon.equals("Scissors")|| weapon.equals("Knife")||
-                    weapon.equals("Shovel")||weapon.equals("iPad")){
+            if(weapon.equals("BROOM")||weapon.equals("SCISSORS")|| weapon.equals("KNIFE")||
+                    weapon.equals("SHOVEL")||weapon.equals("IPAD")){
 
                 weaponCard = getWeaponCard(weapon);
                 //Ensures the weapon is not within the player's own hand
-                if(!hand.contains(weaponCard)){break;}
+                Card finalWeaponCard = weaponCard;
+                if(!hand.getCards().stream().anyMatch(c->c.equals(finalWeaponCard))){break;}
 
                 //System.out.println("\nInvalid "+guessOrSolve+": Card is in your hand. Try again.");
                 gui.showInformation("Invalid "+guessOrSolve+": Card is in your hand. Try again.");
@@ -408,7 +426,7 @@ public class Player
      */
     // line 248 "model.ump"
     private Card getWeaponCard(String weapon) {
-        return new Card(Card.Category.WEAPON, Card.Type.values()[Card.indexOfTyp(weapon)]);
+        return new Card(Card.Category.WEAPON, Card.Type.valueOf(weapon));
     }
 
 
@@ -424,7 +442,7 @@ public class Player
      */
     // line 259 "model.ump"
     private Card getCharacterCard(String character) {
-        return new Card(Card.Category.CHARACTER, Card.Type.values()[Card.indexOfTyp(character)]);
+        return new Card(Card.Category.CHARACTER, Card.Type.valueOf(character));
     }
 
 
@@ -440,7 +458,7 @@ public class Player
      */
     // line 270 "model.ump"
     private Card getRoomCard(String room) {
-        return new Card(Card.Category.ROOM, Card.Type.values()[Card.indexOfTyp(room)]);
+        return new Card(Card.Category.ROOM, Card.Type.valueOf(room));
     }
 
 
@@ -449,14 +467,15 @@ public class Player
      * ---------------------------------------------------------------------------------
      * HELPER METHOD: performGuessAndSolve() (7/7)
      * ---------------------------------------------------------------------------------
-     * Prints the player's previous guess attempts
+     * Returns a String of all the player's previous guesses
      */
     // line 279 "model.ump"
-    private void printPrevGuesses(){
-        System.out.println("These are the previous guesses you have made: ");
+    private String getPrevGuessString(){
+        StringBuilder guesses = new StringBuilder("Previous Guesses: \n");
         for(int i=0; i<guessesMade.size(); i++) {
-            System.out.println("\t" + i + ". " + guessesMade.get(i).getCards());
+            guesses.append("\t").append(i+1).append(". ").append(guessesMade.get(i).getCards());
         }
+        return guesses.toString();
     }
 
 
