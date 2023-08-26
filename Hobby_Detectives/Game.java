@@ -2319,7 +2319,7 @@ public class Game
    */
   private Card askGuess(Hand hand) {
     int counter = 0;
-    for(int i = (getPlayerActive() == 3) ? 0 : getPlayerActive() ; i == getPlayerActive(); i = (i+1 == turnOrder.length) ? 0 : i++) {
+    for(int i = (getPlayerActive() == 3) ? 0 : getPlayerActive() +1 ; i == getPlayerActive(); i = (i+1 == turnOrder.length) ? 0 : i++) {
       this.gui.showInformation(turnOrder[i].getName() + " is looking at their hand.");
       if(turnOrder[i].getHand().getCards().stream().anyMatch((Card c) -> !hand.contains(c))) {
         List<Card> cards = turnOrder[i].getHand().getCards()
