@@ -40,6 +40,7 @@ public class Card implements Comparable {
     cat.add("Character"); 
     cat.add("Room"); 
     cat.add("Weapon");
+    cat.add("Blank");
     typ = new ArrayList<String>(); 
     typ.add("Lucilla"); 
     typ.add("Bert"); 
@@ -55,6 +56,7 @@ public class Card implements Comparable {
     typ.add("Knife"); 
     typ.add("Shovel"); 
     typ.add("iPad");
+    typ.add("Blank");
   }
   /**
    * This is used as a blank card.
