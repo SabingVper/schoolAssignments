@@ -21,6 +21,13 @@ public class GameGUI {
 
     public static String direction;
 
+    /***
+     * Use this constructor if you only need GUI items and the main GUI Object hasn't been made
+     */
+    public GameGUI() {
+
+    }
+
     public GameGUI(Board b){
         this.b = b;
         this.players = b.getPlayersMap(); 

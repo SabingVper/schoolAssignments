@@ -1828,59 +1828,33 @@ public class Game
   // line 190 "model.ump" 
 
    private void gameWaiting(){ 
-
     message("Game Waiting");  
-
-  
-
+    
     while(true) {  
-
-  
-
-      String action = askMessage("Ready to Game?? Y or N");  
-
-  
-
-      if(!action.toUpperCase().equals("Y") && !action.toUpperCase().equals("N")) {  
-
-  
-
-        continue;  
-
-  
-
+      String action = new GameGUI().showComboOptions("Ready to Game?", new String[]{"Yes", "No"});
+      if(action == null || !action.equals("Yes") && !action.equals("No")) {
+        continue;
+      }
+      if(action.equals("Yes")) {
+        setGameReadyWaiting(true);  
+        break; 
+      } else {  
+        setGameReadyExit(true);  
+        break;  
+      }
+      /* String action = askMessage("Ready to Game?? Y or N");  
+      
+      if(.toUpperCase().equals("Y") && !action.toUpperCase().equals("N")) {  
+        continue;
       }  
-
-  
 
       if(action.toUpperCase().equals("Y")) {  
-
-  
-
         setGameReadyWaiting(true);  
-
-  
-
         break;  
-
-  
-
       } else {  
-
-  
-
         setGameReadyExit(true);  
-
-  
-
         break;  
-
-  
-
-      }  
-
-  
-
+      }   */
     } 
 
   } 
