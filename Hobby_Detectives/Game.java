@@ -2182,10 +2182,8 @@ public class Game
   
 
     //message("Cards you know: "); //turnOrder[getPlayerActive()]   
-    Hand hand = new Hand();
-    hand.setCards(turnOrder[getPlayerActive()].getCardsShown());
-    this.gui.showInformation("Cards you have been shown: " + hand.toString());
-  
+    //String cardsKnown =  (turnOrder[getPlayerActive()].getCardsKnown().hasCards())? "" : turnOrder[getPlayerActive()].getCardsKnownString();
+    this.gui.showInformation("Cards you Know: \n"+ turnOrder[getPlayerActive()].getCardsKnownString());
 
     // This will be added when cardsKnown is added to player 
 
@@ -2292,8 +2290,15 @@ public class Game
 
     //Ensures moves only take place whilst there are moves available
     while(currentPlayer.getMoves() > 0){
+      gui.frame.repaint();
       System.out.println(currentPlayer.getName()+" you have "+currentPlayer.getMoves() + " moves.");
+      System.out.println("\n"+ board.toString());
 
+      //Allows the user/player their exit options for the room they are in, if any
+      if(currentPlayer.exitRoom(board, gui)) {
+        gui.frame.repaint();
+        continue;
+      }
       //Breaks out of loop to move on to the next player if an error occurs
       if(!currentPlayer.movement(board)){break;}
 
