@@ -22,6 +22,7 @@ public class Player
     private int x;
     private int y;
     private List<Hand> guessesMade;
+    private List<Card> cardsShown;
     private boolean solveAttempt = false;
     private boolean activePlayer = false;
     public int moves = 0;
@@ -37,6 +38,7 @@ public class Player
         this.x = x;
         this.y = y;
         guessesMade = new ArrayList<>();
+        cardsShown = new ArrayList<>();
     }
 
 
@@ -649,7 +651,29 @@ public class Player
     /** @return the y coordinate of the player's position */
     public int getY() {return y;}
 
+    // ---------------------------------------------
+    //       cardsShown GETTERS AND SETTERS AND ADDER
+    // --------------------------------------------
 
+    /**
+     * Gets cards shown
+     * @return
+     */
+    public List<Card> getCardsShown() {
+        return cardsShown;
+    }
+
+    /**
+     * Sets cardShown
+     * @param cardsShown
+     */
+    public void setCardsShown(List<Card> cardsShown) {
+        this.cardsShown = cardsShown;
+    }
+
+    public boolean addCardsShown(Card card) {
+        return this.cardsShown.add(card);
+    }
 
     @Override
     public String toString()
