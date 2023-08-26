@@ -2309,9 +2309,9 @@ public class Game
       Hand guessHand = currentPlayer.guess(board, gui);
       Card card = askGuess(guessHand);
       if(card != null) {
-        turnOrder[getPlayerActive()].addCardsShown(card);
+        turnOrder[getPlayerActive()].addToCardsKnown(card);
       } else {
-        turnOrder[getPlayerActive()].addCardsShown(new Card());
+        turnOrder[getPlayerActive()].addToCardsKnown(new Card());
       }
     }
 
