@@ -1320,6 +1320,12 @@ public class Game
 
         break; 
 
+      case GameExit:
+
+        gameExit();
+
+        break;
+
     } 
 
   } 
@@ -2172,11 +2178,13 @@ public class Game
    private void displayKnown(){ 
 
     // Message the players known cards  
-
+    this.gui.showInformation("Guess made were: " + turnOrder[getPlayerActive()].getHand().toString());
   
 
     //message("Cards you know: "); //turnOrder[getPlayerActive()]   
-    this.gui.showInformation("Cards you Know: ");
+    Hand hand = new Hand();
+    hand.setCards(turnOrder[getPlayerActive()].getCardsShown());
+    this.gui.showInformation("Cards you have been shown: " + hand.toString());
   
 
     // This will be added when cardsKnown is added to player 
@@ -2294,11 +2302,45 @@ public class Game
 
     if(currentPlayer.isInRoom()){
       Hand guessHand = currentPlayer.guess(board, gui);
-      System.out.println(guessHand.getCards());
+      Card card = askGuess(guessHand);
+      if(card != null) {
+        turnOrder[getPlayerActive()].addCardsShown(card);
+      } else {
+        turnOrder[getPlayerActive()].addCardsShown(new Card());
+      }
     }
 
     gameVars.setMovementMade(true); 
   } 
+  /**
+   * 
+   * @param hand
+   * @return
+   */
+  private Card askGuess(Hand hand) {
+    int counter = 0;
+    for(int i = (getPlayerActive() == 3) ? 0 : getPlayerActive() ; i == getPlayerActive(); i = (i+1 == turnOrder.length) ? 0 : i++) {
+      this.gui.showInformation(turnOrder[i].getName() + " is looking at their hand.");
+      if(turnOrder[i].getHand().getCards().stream().anyMatch((Card c) -> !hand.contains(c))) {
+        List<Card> cards = turnOrder[i].getHand().getCards()
+          .stream().filter((Card c) -> !hand.contains(c)).toList();
+        if(cards.size() == 1) {
+          this.gui.showInformation(turnOrder[i].getName() + " is showing you the " + cards.get(0));
+          return cards.get(0);
+        }
+        String choice = null;
+        do {
+          choice = this.gui.showComboOptions(turnOrder[i].getName() + " choose a card to show.", (String[])cards.stream().map(c -> c.toString()).toArray());
+        } while(choice == null);
+        final String choiceGiven = choice;
+        return cards.stream().filter(c -> !c.toString().equals(choiceGiven)).findFirst().get();
+      } else {
+        this.gui.showInformation(turnOrder[i].getName() + " has nothing to show.");
+      }          
+    }
+    this.gui.showInformation("No one had a card to show.");
+    return null;
+  }
 
   
 
@@ -2412,31 +2454,17 @@ public class Game
    */
    private void setPlayerActive(){ 
     boolean next = false;
-
-    for(int i = 0; i < turnOrder.length; i++) {  
-
-  
+    for(int i = 0; i < turnOrder.length; i++) {    
       if(next) {
         turnOrder[i].setActivePlayer(true); 
         continue; 
       }
       if(turnOrder[i].getActivePlayer() && i != turnOrder.length -1) {  
-
-  
         next = true;
-        turnOrder[i].setActivePlayer(false);  
-
-  
-
+        turnOrder[i].setActivePlayer(false);    
         continue;  
-
-  
-
       }    
       turnOrder[i].setActivePlayer(false);  
-
-  
-
     } 
     if(!next) {
       turnOrder[0].setActivePlayer(true); 
@@ -2471,7 +2499,10 @@ public class Game
 
   
 
-   
+  private void gameExit() {
+    new GameGUI().showInformation("Goodbye");
+    System.exit(0);
+  }   
 
   
 
@@ -2487,7 +2518,9 @@ public class Game
    * Runs the main portion of the game
    */
   public void run() {
-    
+      if(getGameReadyExit()) {
+        exitGame();
+      }
       setupGame();
       activeGame();
 
