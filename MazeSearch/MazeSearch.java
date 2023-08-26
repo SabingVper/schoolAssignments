@@ -39,7 +39,7 @@ public class MazeSearch {
     private int pathCount = 0;
     private boolean stopNow = false;
     private Set<Queue<MazeCell>> paths;
-
+    private boolean goalFound;
 
     /** CORE
      * Search for a path from a cell to the goal.
@@ -106,9 +106,12 @@ public class MazeSearch {
     /** CHALLENGE
      * Search for shortest path from a cell,
      * Use Breadth first search.
+     * Once the path has been it will colour it backwards
+     *  and show the route.
      */
     public void exploreFromCellShortest(MazeCell start) {
         paths = new HashSet<>();
+        goalFound = false;
         Queue<MazeCell> queue = new ArrayDeque<MazeCell>();
         Queue<MazeCell> currPath = new ArrayDeque<MazeCell>();
         exploreFromCellShortest(start, queue, currPath);
@@ -130,19 +133,54 @@ public class MazeSearch {
             }
             if(check1) {
                 mazeCell.draw(Color.blue);
+                // UI.sleep(50);
                 old = mazeCell;
             }
         }
-        maze.getGoal().draw(Color.BLUE);
+        maze.getGoal().draw(Color.green);
     }
 
     /**
+     * Helper Method to search through the maze.
+     * Once the goal is found it stops the search
+     * and returns back to original method.
+     */
+    /*
      * This is an annoying method... it can call a StackOverflowError
      * due to the BFS style of searching.
-     * The Path Queue calls it as it gets up to 9540 elements
+     * The Path Queue calls the Overflow as it gets up to 9540 elements
      * I have made mutliple different verisons of this code.
-     * This one right now can call a StackOverflowError
+     * This one right now can cancels search once goal is found 
       */
+    public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue, Queue<MazeCell> path) {
+        cell.visit();
+        path.add(cell);
+        cell.draw(Color.yellow);
+        // UI.sleep(50);
+        if(cell == maze.getGoal()) {
+            goalFound = true;
+            Queue<MazeCell> temp = new ArrayDeque<MazeCell>();
+            for (MazeCell mazeCell : path) {                
+                temp.add(mazeCell);
+            }
+            paths.add(temp);
+            cell.draw(Color.green);
+        }
+        if(goalFound) return;
+        for (MazeCell mazeCell : cell) {
+            if(!mazeCell.isVisited()) {
+                queue.add(mazeCell);
+            }
+        }
+        if(!queue.isEmpty()) {
+            exploreFromCellShortest(queue.poll(), queue, path);
+        }
+        if(goalFound) return;
+        cell.unvisit();
+        path.remove(cell);
+    }
+    
+    /* Overflow Verison
     public void exploreFromCellShortest(MazeCell cell, Queue<MazeCell> queue, Queue<MazeCell> path) {
         cell.visit();
         path.add(cell);
@@ -165,8 +203,7 @@ public class MazeSearch {
         }
         cell.unvisit();
         path.remove(cell);
-    }
-    
+    } */
 
 
     //=================================================

@@ -77,7 +77,9 @@ public class BusNetworks {
         Set<Town> townSet = new HashSet<Town>();
         townSet.add(town);
         for (Town town2 : town.getNeighbours()) {
-            if(!townSet.contains(town2)) findAllConnected(town2, townSet);
+            if(!townSet.contains(town2)) {
+                findAllConnected(town2, townSet);
+            }
         }
         /* Cheeky Way
         townSet.addAll(town.getNeighbours());
@@ -96,7 +98,9 @@ public class BusNetworks {
     public void findAllConnected(Town town, Set<Town> townSet){
         townSet.add(town);
         for (Town town2 : town.getNeighbours()) {
-            if(!townSet.contains(town2)) findAllConnected(town2, townSet);
+            if(!townSet.contains(town2)) {
+                findAllConnected(town2, townSet);
+            }
         }
     }
 
